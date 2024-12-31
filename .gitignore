@@ -21,11 +21,11 @@ figures/figS2/*.pdf
 tables/*.csv
 
 # Ignore R temporary files
-figures/fig2/*.Rhistory
-figures/fig3/*.Rhistory
-figures/fig4/*.Rhistory
-figures/fig5/*.Rhistory
-figures/figS2/*.Rhistory
+figures/fig2/*.history
+figures/fig3/*.history
+figures/fig4/*.history
+figures/fig5/*.history
+figures/figS2/*.history
 *.Rhistory
 *.RData
 *.Rproj
