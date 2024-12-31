@@ -21,11 +21,11 @@ figures/figS2/*.pdf
 tables/*.csv
 
 # Ignore R temporary files
-figures/fig2/*.Rapp.history
-figures/fig3/*.Rapp.history
-figures/fig4/*.Rapp.history
-figures/fig5/*.Rapp.history
-figures/figS2/*.Rapp.history
+figures/fig2/.Rapp.history
+figures/fig3/.Rapp.history
+figures/fig4/.Rapp.history
+figures/fig5/.Rapp.history
+figures/figS2/.Rapp.history
 *.Rhistory
 *.RData
 *.Rproj
@@ -33,4 +33,4 @@ figures/figS2/*.Rapp.history
 *.RDataTmp
 *.log
 .DS_Store
-.Rproj.user
+.Rproj.user/
