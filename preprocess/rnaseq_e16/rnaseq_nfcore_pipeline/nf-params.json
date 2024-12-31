@@ -1,0 +1,8 @@
+{
+    "input": "SampleSheet.csv",
+    "outdir": "results",
+    "multiqc_title": "rnaseq_nicd_e16",
+    "genome": "GRCm38",
+    "remove_ribo_rna": true,
+    "aligner": "star_salmon"
+}

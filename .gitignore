@@ -1,0 +1,35 @@
+# Ignore raw data
+data/raw_data
+
+# Ignore processed data
+data/processed_data
+
+# Ignore motif files
+data/motif_files
+
+# Ignore meta data
+data/meta_data
+
+# Ignore already made figures
+figures/fig2/*.pdf
+figures/fig3/*.pdf
+figures/fig4/*.pdf
+figures/fig5/*.pdf
+figures/figS2/*.pdf
+
+# Ignore already made tables
+tables/*.csv
+
+# Ignore R temporary files
+figures/fig2/*.Rhistory
+figures/fig3/*.Rhistory
+figures/fig4/*.Rhistory
+figures/fig5/*.Rhistory
+figures/figS2/*.Rhistory
+*.Rhistory
+*.RData
+*.Rproj
+*.Rprofile
+*.RDataTmp
+*.log
+.DS_Store

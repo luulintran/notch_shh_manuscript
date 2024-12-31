@@ -1,0 +1,10 @@
+{
+    "input": "SampleSheet.csv",
+    "read_length": 200,
+    "outdir": "results",
+    "multiqc_title": "atacseq_nicd_e16",
+    "genome": "GRCm38",
+    "mito_name": "MT",
+    "narrow_peak": true,
+    "skip_igv": true
+}

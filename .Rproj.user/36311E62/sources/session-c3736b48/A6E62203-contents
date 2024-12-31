@@ -1,0 +1,1125 @@
+---
+title: "rnaseq_deseq2_2024_07_24_star"
+author: "Luuli N Tran"
+date: "2024-08-06"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("DESeq2")
+BiocManager::install("EnhancedVolcano")
+BiocManager::install("org.Mm.eg.db")
+BiocManager::install("clusterProfiler")
+BiocManager::install("genefilter")
+BiocManager::install("AnnotationDbi")
+BiocManager::install("ReactomePA")
+
+library(DESeq2)
+library(EnhancedVolcano)
+library(org.Mm.eg.db)
+library(clusterProfiler)
+
+BiocManager::install("tidyverse")
+BiocManager::install("ggplot2")
+
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
+library(pheatmap)
+library(genefilter)
+library(AnnotationDbi)
+library(ReactomePA)
+
+BiocManager::install("extrafont")
+library(extrafont)
+
+# import all system fonts, including Arial
+font_import(pattern = "Arial", prompt = FALSE)
+loadfonts(device = "pdf")  
+
+```
+
+## Read in data
+```{r read in data}
+# raw gene counts data from salmon; remove gene_name column
+cts <- read.csv("data/salmon.merged.gene_counts_starsalmon.tsv", sep= "\t", row.names = 1) #makes the rownames the first col
+cts <- as.data.frame(cts[, -c(1)]) #remove the gene_name col
+
+
+# sample metadata
+coldata <- read.csv("meta/coldata.csv", row.names = 1)
+
+
+print(head(cts))
+print(head(coldata)) #make sure that coldata rownames matches cts's column names and that numbers match rows to cols
+dim(coldata)
+dim(cts)
+```
+
+
+## Create DESeq2 dataset
+```{r deseq2 dataset}
+# make sure everything in count matrix cts is an integer
+# creates a DESeq2 dataset
+dds <- DESeqDataSetFromMatrix(countData = round(cts), 
+                              colData = coldata, 
+                              design = ~ condition)
+
+dds$condition <- relevel(dds$condition, ref = "control")
+```
+
+# Run DEseq2 analysis
+```{r deseq2 analysis}
+
+dds <- DESeq(dds)
+res <- results(dds)
+```
+
+## Results
+```{r results}
+
+summary(res)
+head(res)
+
+#res2 <- results(dds, name="condition_NICD_vs_control")
+#summary(res2)
+#head(res2)
+```
+## Log fold change shrinkage for visualization and ranking
+Shrinkage of effect size (LFC estimates) is useful for visualization and ranking of genes. To shrink the LFC, we pass the dds object to the function lfcShrink. Below we specify to use the apeglm method for effect size shrinkage (Zhu, Ibrahim, and Love 2018), which improves on the previous estimator.
+
+We provide the dds object and the name or number of the coefficient we want to shrink, where the number refers to the order of the coefficient as it appears in resultsNames(dds).
+
+```{r}
+resultsNames(dds)
+
+resLFC <- lfcShrink(dds, coef="condition_NICD_vs_control", type="apeglm")
+resLFC
+```
+
+## p-values and adjusted p-values
+We can order our results table by the smallest p value:
+```{r}
+resOrdered <- res[order(res$pvalue),]
+resOrdered
+```
+
+We can summarize some basic tallies using the summary function.
+```{r}
+summary(res)
+```
+How many adjusted p-values were less than 0.1?
+```{r}
+sum(res$padj < 0.1, na.rm=TRUE)
+```
+
+The results function contains a number of arguments to customize the results table which is generated. You can read about these arguments by looking up ?results. Note that the results function automatically performs independent filtering based on the mean of normalized counts for each gene, optimizing the number of genes which will have an adjusted p value below a given FDR cutoff, alpha. Independent filtering is further discussed below. By default the argument alpha is set to 0.1. If the adjusted p value cutoff will be a value other than 0.1, alpha should be set to that value:
+```{r}
+# adjust cutoff of adjusted pvalue to < 0.05
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+```
+
+```{r}
+sum(res05$padj < 0.05, na.rm=TRUE)
+```
+
+
+## MA Plot
+shows log2 fold changes attributable to a given variable over the mean of normalized counts for all the samples in DESeqDataSet. Points will be colord blue if the adjust p value is less than 0.1. Points which fall out of the window are plotted as open triangles pointing either up or down.
+```{r}
+plotMA(res, ylim=c(-2,2))
+```
+
+It is more useful to visualize the MA-plot for the shrunken log2 fold changes, which remove the noise associated with log2 fold changes from low count genes without requiring arbitrary filtering thresholds
+```{r}
+plotMA(resLFC, ylim=c(-2,2))
+```
+
+```{r}
+# because we are interested in treated vs untreated, we set 'coef=2'
+resNorm <- lfcShrink(dds, coef=2, type="normal")
+resAsh <- lfcShrink(dds, coef=2, type="ashr")
+```
+
+```{r}
+par(mfrow=c(1,3), mar=c(4,4,2,1))
+xlim <- c(1,1e5); ylim <- c(-3,3)
+plotMA(resLFC, xlim=xlim, ylim=ylim, main="apeglm")
+plotMA(resNorm, xlim=xlim, ylim=ylim, main="normal")
+plotMA(resAsh, xlim=xlim, ylim=ylim, main="ashr")
+```
+
+## Plot Counts
+
+It can also be useful to examine the counts of reads for a single gene across the groups. A simple function for making this plot is plotCounts, which normalizes counts by the estimated size factors (or normalization factors if these were used) and adds a pseudocount of 1/2 to allow for log scale plotting. The counts are grouped by the variables in intgroup, where more than one variable can be specified. Here we specify the gene which had the smallest p value from the results table created above. You can select the gene to plot by rowname or by numeric index.
+
+```{r}
+plotCounts(dds, gene="ENSMUSG00000000567", intgroup="condition")
+plotCounts(dds, gene="ENSMUSG00000003436", intgroup="condition")
+
+```
+
+```{r}
+geneCounts <- plotCounts(dds, gene = "ENSMUSG00000000567", intgroup = "condition",
+                         returnData = TRUE)
+
+ggplot(geneCounts, 
+       aes(x = condition, y = count, color = condition)) +
+  scale_y_log10() +  
+  geom_jitter(size = 3, width = 0.075) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(title = "Sox9",
+       y = "Count")
+
+
+geneCounts <- plotCounts(dds, gene = "ENSMUSG00000003436", intgroup = "condition",
+                         returnData = TRUE)
+
+ggplot(geneCounts, 
+       aes(x = condition, y = count, color = condition)) +
+  scale_y_log10() +  
+  geom_jitter(size = 3, width = 0.075) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  labs(title = "Dll3",
+       y = "Count")
+
+```
+
+
+## Number of up and downregulated genes in NICD
+```{r}
+genes_up <- sum(resOrdered$log2FoldChange > 0 & resOrdered$padj < 0.05, na.rm = TRUE)
+genes_up
+genes_down <- sum(resOrdered$log2FoldChange < 0 & resOrdered$padj < 0.05, na.rm = TRUE)
+genes_down
+
+cat("Number of upregulated genes:", genes_up, "\n")
+cat("Number of downregulated genes:", genes_down, "\n")
+
+```
+
+# Export results to CSV files
+```{r}
+#write.csv(as.data.frame(resOrdered), file="deseq2/condition_NICD_vs_CTRL_results.csv")
+```
+
+Exporting only the results which pass an adjusted p value threshold can be accomplished with the subset function, followed by the write.csv function.
+```{r}
+resSig <- subset(resOrdered, padj < 0.1)
+resSig
+
+#write.csv(as.data.frame(resSig), file = "deseq2/condition_NICD_vs_CTRL_results_resSig.csv")
+```
+
+
+## Extracting transformed values
+These transformation functions return an object of class DESeqTransform which is a subclass of RangedSummarizedExperiment. For ~20 samples, running on a newly created DESeqDataSet, rlog may take 30 seconds, while vst takes less than 1 second. The running times are shorter when using blind=FALSE and if the function DESeq has already been run, because then it is not necessary to re-estimate the dispersion values. The assay function is used to extract the matrix of normalized values.
+```{r}
+vsd <- vst(dds, blind=FALSE)
+rld <- rlog(dds, blind=FALSE)
+head(assay(vsd), 3)
+```
+## Heatmap of sample-to-sample distances
+Another use of the transformed data is sample clustering. Here, we apply the dist function to the transpose of the transformed count matrix to get sample-to-sample distances.
+
+```{r}
+sampleDists <- dist(t(assay(vsd)))
+```
+
+A heatmap of this distance matrix gives us an overview over similarities and dissimilarities between samples. We have to provide a hierarchical clustering hc to the heatmap function based on the sample distances, or else the heatmap function would calculate a clustering based on the distances between the rows/columns of the distance matrix.
+```{r}
+
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$condition, vsd$type, sep="-")
+colnames(sampleDistMatrix) <- NULL
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+```
+## Top variable genes
+```{r}
+topVarGenes <- head(order(rowVars(assay(vsd)), decreasing = TRUE), 20)
+mat  <- assay(vsd)[ topVarGenes, ]
+mat  <- mat - rowMeans(mat)
+
+#get gene symbols for ensembl id's
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = rownames(mat),
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+#replace the rownames with gene_symbols
+rownames(mat) <- gene_symbols
+
+
+anno <- as.data.frame(colData(vsd)[, c("batch", "condition")])
+pheatmap(mat, annotation_col = anno)
+
+
+```
+
+```{r}
+qs <- c(0, quantile(resLFC$baseMean[resLFC$baseMean > 0], 0:6/6))
+bins <- cut(resLFC$baseMean, qs)
+levels(bins) <- paste0("~", round(signif((qs[-1] + qs[-length(qs)])/2, 2)))
+fractionSig <- tapply(resLFC$pvalue, bins, function(p)
+                          mean(p < .05, na.rm = TRUE))
+barplot(fractionSig, xlab = "mean normalized count",
+                     ylab = "fraction of small p values")
+```
+
+## PCA plot
+Related to the distance matrix is the PCA plot, which shows the samples in the 2D plane spanned by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects.
+```{r}
+plotPCA(vsd, intgroup=c("condition"))
+
+# Plot PCA with ggplot to customize colors:
+# extract the PCA data
+pcaData <- plotPCA(vsd, intgroup = "condition", returnData = TRUE)
+
+# get percentage of variance for the first two principal components
+percentVar <- round(100 * attr(pcaData, "percentVar"))
+
+# plot and modify colors
+p <- ggplot(pcaData, aes(x = PC1, y = PC2, color = condition)) +
+    geom_point(size = 8) +
+    labs(title = "PCA",
+         x = paste0("PC1[", percentVar[1], "%]"),
+         y = paste0("PC2[", percentVar[2], "%]")) +
+    scale_color_manual(values = c("control" = "#76BAE0", "NICD" = "#B8396B")) +
+    theme_classic(base_family = "Arial", base_size = 16) +
+    theme(
+        axis.line = element_blank(),  # Remove default axis lines
+        panel.border = element_rect(color = "black", fill = NA, size = 1),  # Add border around the plot
+        legend.position = "none",
+        plot.title = element_text(hjust = 0.5, size = 16)
+    )
+
+# show the plot
+print(p)
+
+#ggsave(p, filename ="deseq2/figures/NICD_vs_CTRL_pca.pdf", dpi = 300, width = 5, height = 5)
+
+
+
+
+```
+
+## Annotate results with gene symbols and entrez ids
+Using org.Mm.eg.db package.
+
+```{r}
+#sample_keys <- head(keys(org.Mm.eg.db, keytype = "ENSEMBL"))
+#print(sample_keys)
+
+ensembl_ids <- rownames(res)
+
+res$symbol <- mapIds(org.Mm.eg.db,
+                     keys=ensembl_ids,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+res$entrez <- mapIds(org.Mm.eg.db,
+                     keys=ensembl_ids,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+```
+
+```{r}
+resOrdered <- res[order(res$padj),]
+head(resOrdered)
+
+resOrdered <- resOrdered[, c("symbol", "entrez", setdiff(colnames(resOrdered), c("symbol", "entrez")))]
+head(resOrdered)
+#write.csv(as.data.frame(resOrdered), "deseq2/NICD_vs_CTRL_resOrdered_ann.csv")
+```
+
+
+## Export up and downregulated genes as separate files
+```{r}
+out <- as.data.frame(resOrdered)
+head(out)
+
+genes_up_list <- out %>%
+  dplyr:: filter(log2FoldChange > 0 & padj < 0.05)
+genes_up_list <- genes_up_list[order(genes_up_list$padj), ]
+head(genes_up_list)
+nrow(genes_up_list)
+
+genes_down_list <- out %>%
+  dplyr:: filter(log2FoldChange < 0 & padj < 0.05)
+genes_down_list <- genes_down_list[order(genes_down_list$padj),]
+head(genes_down_list)
+nrow(genes_down_list)
+
+#write.csv(genes_up_list, "deseq2/NICD_vs_CTRL_upgenes.csv")
+#write.csv(genes_down_list, "deseq2/NICD_vs_CTRL_downgenes.csv")
+
+```
+
+## Volcano plot with gene symbols
+```{r}
+EnhancedVolcano(
+  resOrdered,
+  lab = resOrdered$symbol,         
+  x = 'log2FoldChange',                  
+  y = 'padj',                            
+  title = 'Volcano plot',
+  subtitle = 'Differential gene expression',
+  pCutoff = 0.05,                        # Adjust p-value cutoff
+  FCcutoff = 1,                          # Fold change cutoff
+  pointSize = 3.0,                      
+  labSize = 4.0,                        
+  max.overlaps = 20,
+  xlim = c(-10,10),
+  ylim = c(0, 60),
+  drawConnectors = FALSE
+)
+
+# Print the first few rows to check the structure
+head(resOrdered)
+
+
+```
+
+
+# Gene lists
+Use gene lists to see if any of the genes we're interested in are up or downregulated in NICD
+
+## Make Gene lists. 
+These are the lists that Caitlin W. used for sc-RNA-seq analysis (I specifically got this from her analysis of radial glia in Yuzwa et al E15.5). 
+
+```{r gene lists}
+# Load gene lists
+progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb', 
+                            'Eomes', 'Ccne2', 'Clspn', 'Gins2', 'Pcna', 'Atad2', 'Mcm7', 'Mcm3', 'Slbp', 'Gmnn', 
+                            'Kiaa0101', 'Mcm10', 'Rad51', 'Cdc45', 'Exo1', 'Hist1h4c', 'Cdk1', 'Hist1h1b', 'Hist1h1c', 
+                            'Hist1h1e', 'Ube2c', 'Rrm2', 'Zwint', 'Hmgb2', 'Ccna', 'Cdca5', 'Esco2', 'Aurkb', 
+                            'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 'Cenpf', 'Cks2', 'Pttg1', 'Cdc20', 'Top2a', 
+                            'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 'Kif20a')
+RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb') 
+
+IPC_genes <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 'Gadd45g')
+
+proliferative_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1')
+
+neurogenic_genes <- c('Eomes', 'Neurog2', 'Tuba1a', 'Tubb3', 'Btg2', 'Neurog1') #Btg2
+
+neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6', 'Neurod2','Satb2', 'Gria2', 'Nrp1', 'Dab1', 
+                            'Nrxn3', 'Neurod4')
+
+newborn_neurons <- c('Foxg1', 'Neurod1', 'Unc5d', 'Rnd1', 'Rnd2', 'Rnd3', 'Dcx', 'Pafah1b1', 'Cdk5') #Rnd1
+
+IN_genes <- c('Dlx5', 'Dlx6os1','Sst', 'Lhx6', 'Gad1', 'Gad2', 'Htr3a', 'Npas1', 'Adarb2', 'Cdca7', 'Arx', 
+                      'Nrxn3', 'Erbb4', 'Dlx1', 'Sp8', 'Sp9', 'Tshz1', 'Prokr2')
+
+OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
+                     'Lhfpl3', 'Cntn1')
+
+preOPC_genes <- c('Ascl1', 'Ccnd1', 'Dleu7', 'Egfr', 'Egr1', 'Qk', 'Gas1', 'Sall3', 'Gng12', 'Ncald', 'Gsx2', 
+                         'Fam181b', 'Rfx4', 'Bcan')
+
+Shh_pathway_genes <- c('Gli1', 'Smo', 'Ptch1', 'Boc', 'Cdon', 'Gas1', 'Gli2','Ptch2', 'Hhip', 'Gli3')  #Lrp2 #Gli3
+
+Notch_pathway_genes <- c('Hes1', 'Hes5', 'Hey1', 'Notch1', 'Notch2', 'Notch3', 'Notch4', 'Hey2', 'Maml1', 'Rbpj', 'Psen1', 'Psen2')
+
+
+
+astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
+
+#Ascl1 <- c('Ascl1')
+
+#Olig2 <- c('Olig2')
+
+#Neurod2 <- c('Neurod2')
+
+#Hes1 <- c('Hes1')
+#Hes5 <- c('Hes5')
+
+#Sox2 <- c('Sox2')
+#Pax6 <- c('Pax6')
+
+#Gas1 <- c('Gas1')
+#Cdon <- c('Cdon')
+#Ptch1 <- c('Ptch1')
+#Gli1 <- c('Gli1')
+#Gli2 <- c('Gli2')
+#Hhip <- c('Hhip')
+
+```
+
+## Combine some of the lists to be more general
+```{r combined gene lists}
+neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, newborn_neurons)
+
+gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes)
+
+progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
+
+opc_all <- c(preOPC_genes, OPC_genes)
+
+```
+
+## Customize PCA
+```{r}
+all <- c(progenitor_all, gliogenic_all, neurogenic_all)
+res_df <- as.data.frame(resOrdered)
+
+head(res_df)
+significant_genes <- res_df %>%
+  dplyr:: filter(symbol %in% all)
+
+alpha <- 0.05
+
+ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = padj < 0.05), alpha = 0.6, size = 2) +  # color based on significance
+  scale_color_manual(values = c("grey", "#B8396B")) +  
+  theme_minimal() +  
+  labs(title = "Volcano Plot of DESeq2 Results",
+       x = "Log2 Fold Change",
+       y = "-Log10 Adjusted P-value") +
+  geom_hline(yintercept = -log10(alpha), linetype = "dashed", color = "blue") +  # Horizontal line for p-value threshold
+  #geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "blue") +  # Vertical lines for fold change thresholds
+  theme(plot.title = element_text(hjust = 0.5)) +  # Center title
+  ggrepel::geom_label_repel(data = subset(res_df, padj < alpha & abs(log2FoldChange) > 1),  # Label significant points. Replace with a list if you want to label specific genes
+                             aes(label = symbol), 
+                             size = 3, 
+                             box.padding = 0.3,
+                            max.overlaps = 15) +
+  xlim(-10, 10) +
+  ylim(0, 60)
+```
+
+## PCA with specific genes highlighted
+```{r}
+#all <- c(progenitor_all, gliogenic_all, neurogenic_all, Notch_pathway_genes)
+
+specific_genes <- c('Dll3', 'Dll1', 'Neurod4', 'Eomes', 'Neurog2', 'Hey1', 'Hes1', 'Notch1', 'Nes', 'Sox2', 'Sox9')
+res_df <- as.data.frame(resOrdered)
+
+head(res_df)
+
+significant_genes <- res_df %>%
+  dplyr:: filter(symbol %in% specific_genes)
+
+alpha <- 0.05
+
+ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = padj < alpha), alpha = 0.8, size = 2) +  # color based on significance
+  scale_color_manual(values = c("grey", "#B8396B")) +  
+  theme_minimal() +  
+  labs(title = "Volcano Plot of DESeq2 Results",
+       x = "Log2 Fold Change",
+       y = "-Log10 Adjusted P-value") +
+  theme(plot.title = element_text(hjust = 0.5)) +  
+  # outline dots of specific genes
+  geom_point(data = significant_genes, color = "black", size = 2, shape = 21, fill = "#B8396B") +
+  # label dots with gene names
+  ggrepel::geom_text_repel(data = significant_genes,  
+                           aes(label = paste0("italic('",symbol, "')")), 
+                           size = 3.5, 
+                           point.padding = 0.3,  
+                           max.overlaps = 20,  
+                           segment.color = "black",  
+                           segment.size = 0.5,
+                           parse = TRUE) +  
+  xlim(-10, 10) +
+  ylim(0, 60) +
+  theme(legend.position = "none")
+
+# make color group based on log2FoldChange and padj values
+res_df$color_group <- ifelse(res_df$log2FoldChange < 0 & res_df$padj < alpha, "#76BAE0",
+                      ifelse(res_df$log2FoldChange > 0 & res_df$padj < alpha, "#B8396B", "grey"))
+
+# filter for specific genes
+significant_genes <- res_df %>%
+  dplyr::filter(symbol %in% specific_genes)
+
+volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
+  geom_point(aes(color = color_group), alpha = 0.8, size = 2) +  # color based on the color_group
+  scale_color_manual(values = c("#76BAE0" = "#76BAE0", "grey" = "grey", "#B8396B" = "#B8396B")) +  
+  theme_minimal(base_family = "Arial", base_size = 12) +  
+  labs(title = "Volcano Plot of DESeq2 Results",
+       x = "Log2 Fold Change",
+       y = "-Log10 Adjusted P-value") +
+  theme(
+        plot.title = element_text(hjust = 0.5),
+        panel.border = element_rect(color = "black", fill = NA, size = .75)) +
+  
+  # outline dots of specific genes with the same fill color as color_group
+  geom_point(data = significant_genes, aes(fill = color_group), color = "black", size = 2, shape = 21) +
+  # keep fill colors same
+  scale_fill_manual(values = c("#76BAE0" = "#76BAE0", "grey" = "grey", "#B8396B" = "#B8396B")) +
+  # label dots with gene names
+  ggrepel::geom_text_repel(data = significant_genes,  
+                           aes(label = paste0("italic('",symbol, "')")), 
+                           size = 4, 
+                           point.padding = 0.3,  
+                           max.overlaps = 20,  
+                           segment.color = "black",  
+                           segment.size = 0.5,
+                           parse = TRUE) +  
+  theme(legend.position = "none") +
+  xlim(-10, 10) +
+  ylim(0, 60)
+
+print(volcano_plot)
+
+#ggsave(volcano_plot, filename="deseq2/figures/volcanoplot_specificgenes2.pdf", width = 5, height = 5)
+```
+
+## Filter genes based on gene lists
+```{r filter genes function}
+# Filter genes
+#Function
+filter_genes_function <- function(genes_df, gene_list) {
+  filtered_genes <- genes_df[genes_df$symbol %in% gene_list, ]
+  return(filtered_genes)
+}
+
+
+```
+
+### Progenitor genes
+```{r}
+progenitor_up <- filter_genes_function(genes_up_list, progenitor_all)
+nrow(progenitor_up)
+
+progenitor_down <- filter_genes_function(genes_down_list, progenitor_all)
+nrow(progenitor_down)
+
+progenitor_up
+progenitor_down
+```
+
+### Neurogenic genes
+```{r}
+neurogenic_up <- filter_genes_function(genes_up_list, neurogenic_all)
+nrow(neurogenic_up)
+
+neurogenic_down <- filter_genes_function(genes_down_list, neurogenic_all)
+nrow(neurogenic_down)
+
+neurogenic_down
+```
+
+### Gliogenic genes
+```{r}
+gliogenic_up <- filter_genes_function(genes_up_list, gliogenic_all)
+nrow(gliogenic_up)
+
+gliogenic_down <- filter_genes_function(genes_down_list, gliogenic_all)
+nrow(gliogenic_down)
+
+gliogenic_up
+gliogenic_down
+```
+
+### Notch genes
+```{r}
+notch_up <- filter_genes_function(genes_up_list, Notch_pathway_genes)
+nrow(notch_up)
+
+notch_down <- filter_genes_function(genes_down_list, Notch_pathway_genes)
+nrow(notch_down)
+
+notch_up
+notch_down
+```
+
+### Shh genes
+```{r}
+shh_up <- filter_genes_function(genes_up_list, Shh_pathway_genes)
+nrow(shh_up)
+
+shh_down <- filter_genes_function(genes_down_list, Shh_pathway_genes)
+nrow(shh_down)
+
+shh_up
+shh_down
+```
+# GO analysis
+
+```{r}
+#Look for the column that has the ENTREZ id
+colnames(genes_up_list)
+
+#Extract the gene symbols into a list
+genes_up_entrez <- genes_up_list$entrez
+head(genes_up_entrez)
+#na.omit(genes_up_entrez)
+
+#Extract the gene symbols into a list
+genes_down_entrez <- genes_down_list$entrez
+head(genes_down_entrez)
+#na.omit(genes_down_entrez)
+
+genes_up_symbol <- genes_up_list$symbol
+genes_down_symbol <- genes_down_list$symbol
+
+```
+
+```{r}
+#Run GO analysis
+
+GO_results_up <- enrichGO(gene = genes_up_symbol,
+                            OrgDb = "org.Mm.eg.db", #annotation database
+                            keyType = "SYMBOL", #gene id type
+                            ont = "BP") #ontology: BP (biological process), MP (molecular function), CC (cellular component)
+
+GO_results_down <- enrichGO(gene = genes_down_symbol,
+                            OrgDb = "org.Mm.eg.db", #annotation database
+                            keyType = "SYMBOL", #gene id type
+                            ont = "BP") #ontology: BP (biological process), MF (molecular function), CC (cellular component)
+```
+
+
+```{r}
+#look at the results
+head(as.data.frame(GO_results_up))
+
+#View(as.data.frame(GO_results_CTRL))
+head(as.data.frame(GO_results_down))
+#View(as.data.frame(GO_results_up))
+```
+
+```{r}
+up_go_barplot <- plot(barplot(GO_results_up, showCategory = 20))
+
+
+down_go_barplot <- plot(barplot(GO_results_down, showCategory = 20))
+```
+## Reactome Pathway Analysis
+
+```{r}
+# Upregulated
+pathway_up <- enrichPathway(genes_up_entrez,
+                          organism = "mouse")
+
+dotplot(pathway_up)
+
+
+# Downregulated
+pathway_down<- enrichPathway(genes_down_entrez,
+                          organism = "mouse")
+
+dotplot(pathway_down)
+```
+## KEGG Pathway Enrichment Analysis
+
+```{r}
+pathway_KEGG_up <- enrichKEGG(genes_up_entrez,
+                          organism = "mouse")
+
+pathway_KEGG_down <- enrichKEGG(genes_down_entrez,
+                          organism = "mouse")
+
+dotplot(pathway_KEGG_up)
+dotplot(pathway_KEGG_down)
+
+```
+
+```{r}
+GO_stemcell <- c('neural precursor cell proliferation', 'stem cell population maintenance','stem cell proliferation', 'cell fate commitment', 'pattern specification process', 'gliogenesis', 'glial cell differentiation')
+GO_gliogenesis <- c('gliogenesis', 'glial cell differentiation', 'glial cell development', 'regulation of gliogenesis', 'glial cell fate commitment', 'regulation of glial cell differentiation', 'myelination', 'oligodendrocyte differention', 'regulation of oligodendrocyte differentiation', 'regulation of oligodendrocyte progenitor proliferation', 'oligodendrocyte progenitor proliferation', 'astrocyte differentiation')
+GO_neurogenesis <- c('regulation of neurogenesis',  'positive regulation of neurogenesis', 'neuron fate commitment', 'neuron fate specification', 'regulation of neuron differentiation', 'neuron projection extension', 'neuron migration', 'central nervous system neuron differentiation', 'neuron projection guidance', 'neuron maturation')
+
+GO_list <- c(GO_stemcell, GO_gliogenesis, GO_neurogenesis)
+```
+
+
+```{r}
+GO_results_up_df <- as.data.frame(GO_results_up)
+
+
+GO_results_up_df <- GO_results_up_df %>%
+  dplyr::filter(Description %in% GO_list)
+
+GO_results_up_df$log_p.adjust <- -log10(GO_results_up_df$p.adjust)
+
+GO_results_up_df$Description <- factor(GO_results_up_df$Description, levels = c('neural precursor cell proliferation', 'stem cell population maintenance','stem cell proliferation', 'cell fate commitment', 'pattern specification process', 'gliogenesis', 'glial cell differentiation', 'glial cell development', 'regulation of gliogenesis', 'glial cell fate commitment', 'regulation of glial cell differentiation', 'myelination', 'oligodendrocyte differention', 'regulation of oligodendrocyte differentiation', 'regulation of oligodendrocyte progenitor proliferation', 'oligodendrocyte progenitor proliferation', 'astrocyte differentiation' , 'regulation of neurogenesis',  'positive regulation of neurogenesis', 'neuron fate commitment', 'neuron fate specification', 'regulation of neuron differentiation', 'neuron projection extension', 'neuron migration', 'central nervous system neuron differentiation', 'neuron projection guidance', 'neuron maturation'))
+
+ggplot(GO_results_up_df, aes(x = reorder(Description, -Count), y = Count, fill = log_p.adjust)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red", name = "-log10(p.adjust)") +
+  coord_flip() +  # Flip coordinates to make it horizontal
+  labs(title = "GO Enrichment Results",
+       x = "GO Term",
+       y = "Count",
+       fill = "p.adjust") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+```{r}
+GO_results_down_df <- as.data.frame(GO_results_down)
+
+
+GO_results_down_df <- GO_results_down_df %>%
+  dplyr::filter(Description %in% GO_list)
+
+GO_results_down_df$log_p.adjust <- -log10(GO_results_down_df$p.adjust)
+
+GO_results_up_df$Description <- factor(GO_results_up_df$Description, levels = c('neural precursor cell proliferation', 'stem cell population maintenance','stem cell proliferation', 'cell fate commitment', 'pattern specification process', 'gliogenesis', 'glial cell differentiation', 'glial cell development', 'regulation of gliogenesis', 'glial cell fate commitment', 'regulation of glial cell differentiation', 'myelination', 'oligodendrocyte differention', 'regulation of oligodendrocyte differentiation', 'regulation of oligodendrocyte progenitor proliferation', 'oligodendrocyte progenitor proliferation', 'astrocyte differentiation' , 'regulation of neurogenesis',  'positive regulation of neurogenesis', 'neuron fate commitment', 'neuron fate specification', 'regulation of neuron differentiation', 'neuron projection extension', 'neuron migration', 'central nervous system neuron differentiation', 'neuron projection guidance', 'neuron maturation'))
+
+ggplot(GO_results_down_df, aes(x = reorder(Description, -Count), y = Count, fill = log_p.adjust)) +
+  geom_bar(stat = "identity") +
+  scale_fill_gradient(low = "blue", high = "red", name = "-log10(p.adjust)") +
+  coord_flip() +  # Flip coordinates to make it horizontal
+  labs(title = "GO Enrichment Results",
+       x = "GO Term",
+       y = "Count",
+       fill = "p.adjust") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Combine the 2 GO results into one dot plot.
+* plot go terms with a dotplot, where size = gene ratio (%), and color = -log10(p.adjust) (higher number= more significant, compared to other GO terms for that one TF)
+
+```{r}
+GO_results_up_df$Condition <- "Upregulated"
+GO_results_down_df$Condition <- "downregulated"
+
+
+GO_results_up_df$GeneRatio_percent <- (GO_results_up_df$Count/769)*100
+GO_results_down_df$GeneRatio_percent <- (GO_results_down_df$Count/817)*100
+
+#GO_results_up_df
+
+
+
+combined_df <- bind_rows(GO_results_up_df, GO_results_down_df)
+
+combined_df$Description <- factor(combined_df$Description, levels = c('neural precursor cell proliferation', 'stem cell population maintenance','stem cell proliferation', 'cell fate commitment', 'pattern specification process', 'gliogenesis', 'glial cell differentiation', 'glial cell development', 'regulation of gliogenesis', 'glial cell fate commitment', 'regulation of glial cell differentiation', 'myelination', 'oligodendrocyte differention', 'regulation of oligodendrocyte differentiation', 'regulation of oligodendrocyte progenitor proliferation', 'oligodendrocyte progenitor proliferation', 'astrocyte differentiation' , 'regulation of neurogenesis',  'positive regulation of neurogenesis', 'neuron fate commitment', 'neuron fate specification', 'regulation of neuron differentiation', 'neuron projection extension', 'neuron migration', 'central nervous system neuron differentiation', 'neuron projection guidance', 'neuron maturation'))
+
+ggplot(combined_df, aes(x = Condition, y = Description, size = GeneRatio_percent, color = log_p.adjust)) +
+  geom_point() +
+  scale_color_gradient(low = "blue", high = "red", name = "-log10(p.adjust)") +
+  labs(title = "Differentially expressed genes GO terms",
+       x = "NICD",
+       y = "GO Term",
+       size = "Gene Ratio") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+#ggsave("deseq2_figures/dotplot_degs_go.pdf", dpi = 300)
+
+
+```
+
+## Heaetmap of DEGs
+
+```{r}
+# 1. filter DEGs with padj < 0.05 and lfc > 1
+padj_threshold <- 0.05
+lfc_threshold <- 0
+
+# filter for significant DEGs
+resSig <- resOrdered[which(resOrdered$padj < padj_threshold & abs(resOrdered$log2FoldChange) > lfc_threshold), ]
+
+# 2. extract normalized counts for DEGs
+# Use vst transformation or rlog transformation
+vsd <- vst(dds, blind=FALSE)
+mat <- assay(vsd)[rownames(resSig), ]  # extract the matrix for the significant genes
+
+# 3. Center the data 
+mat <- mat - rowMeans(mat)
+
+# create a heatmap
+pheatmap(mat, 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = FALSE, 
+         annotation_col = as.data.frame(colData(dds)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(100))
+
+
+# customizing the heatmap 
+pheatmap(mat, 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = FALSE,   # TRUE if you want to show gene names
+         show_colnames = TRUE, 
+         scale = "row",           
+         annotation_col = as.data.frame(colData(dds)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(100))
+
+
+
+#"#76BAE0", "NICD" = "#B8396B"
+
+
+     #  color = colorRampPalette(c("#fde0dd", "#fa9fb5", "#c51b8a", "#7a0177"))(100))
+```
+## Heatmap with specific gene sets
+```{r}
+all <- c(progenitor_all, gliogenic_all, neurogenic_all)
+
+# remove NAs from padj before filtering for padj < 0.05
+significant_res <- res[!is.na(res$padj) & res$padj < 0.05, ]
+
+# extract rownames/ensembl id's of significant DEGs
+significant_genes <- rownames(significant_res)
+
+# map ensembl id's to symbols
+significant_symbols <- mapIds(org.Mm.eg.db,
+                               keys = significant_genes,
+                               column = "SYMBOL",
+                               keytype = "ENSEMBL",
+                               multiVals = "first")
+
+# filter significant genes list for genes in gene list by symbol
+selected_genes <- significant_genes[significant_symbols %in% all]
+
+# subset the assay matrix for the selected genes
+# 'vsd' is variance-stabilized data: transforms count data to stabilize variance across different levels of expression. Makes visualization and downstream analysis such as clustering by normalizing counts to reduce the effect of high variability in low count genes.
+mat <- assay(vsd)[selected_genes, ]
+
+# update row names with gene symbols for the selected genes
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = selected_genes,
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+# ensure the row names are gene symbols
+rownames(mat) <- gene_symbols
+
+# center data
+mat <- mat - rowMeans(mat)
+
+# make heatmap
+pheatmap(mat,
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50)) 
+
+
+
+
+
+
+
+```
+```{r}
+progenitor <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb')
+preOPC <- c('Ascl1', 'Dleu7', 'Egfr', 'Egr1', 'Qk', 'Gas1', 'Sall3', 'Gng12', 'Ncald', 'Gsx2', 
+                         'Fam181b', 'Rfx4', 'Bcan','Ccnd1')
+OPC <- c('Ascl1', 'Cntn1', 'Olig1', 'Olig2', 'Pdgfra', 'Sox10', 'Gng12', 'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
+                     'Lhfpl3')
+astro <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5') #Aqp4
+ipc <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 'Gadd45g', 'Neurog1', 'Btg2')
+neuron <-c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6', 'Neurod2','Satb2', 'Gria2', 'Nrp1', 'Dab1', 
+                            'Nrxn3', 'Neurod4')
+
+
+desired_order <- c(progenitor, preOPC, astro, OPC, ipc, neuron) 
+
+# Ensure the order vector only includes genes present in the matrix
+ordered_genes <- desired_order[desired_order %in% rownames(mat)]
+
+# Subset the matrix to include only the ordered genes
+mat_ordered <- mat[match(ordered_genes, rownames(mat)), ]
+
+# Make heatmap with ordered genes
+pheatmap(mat_ordered,
+         cluster_rows = FALSE,  # Set to FALSE to use specified order
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50))
+
+```
+
+## Heatmap with specific genes of TFs from atac-seq motif enrichment 
+```{r}
+
+TFs <- c('Lhx2', 'Nfix', 'Nfia', 'Sox2', 'Sox10', 'Nfic', 'Neurod2', 'Neurog1', 'Mef2c', 'Mef2d', 'Eomes', 'Tbr1', 'Ascl1')
+
+# remove NAs from padj before filtering for padj < 0.05
+significant_res <- res[!is.na(res$padj) & res$padj < 0.05, ]
+
+# extract rownames/ensembl id's of significant DEGs
+significant_genes <- rownames(significant_res)
+
+# map ensembl id's to symbols
+significant_symbols <- mapIds(org.Mm.eg.db,
+                               keys = significant_genes,
+                               column = "SYMBOL",
+                               keytype = "ENSEMBL",
+                               multiVals = "first")
+
+# filter significant genes list for genes in gene list by symbol
+selected_genes <- significant_genes[significant_symbols %in% TFs]
+
+# subset the assay matrix for the selected genes
+# 'vsd' is variance-stabilized data: transforms count data to stabilize variance across different levels of expression. Makes visualization and downstream analysis such as clustering by normalizing counts to reduce the effect of high variability in low count genes.
+mat <- assay(vsd)[selected_genes, ]
+
+# update row names with gene symbols for the selected genes
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = selected_genes,
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+# ensure the row names are gene symbols
+rownames(mat) <- gene_symbols
+
+# center data
+mat <- mat - rowMeans(mat)
+
+# make heatmap
+pheatmap(mat,
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50)) 
+
+```
+## All TFs, regardless of significance
+
+```{r}
+ens_ids <- mapIds(org.Mm.eg.db,
+                  keys = TFs,
+                  column = "ENSEMBL",
+                  keytype = "SYMBOL",
+                  multiVals = "first")
+
+# Filter the vsd matrix for the TFs
+mat <- assay(vsd)[rownames(assay(vsd)) %in% ens_ids, ]
+
+# Update row names with gene symbols
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = rownames(mat),
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+# Ensure the row names are gene symbols
+rownames(mat) <- gene_symbols
+
+# Center the data
+mat <- mat - rowMeans(mat)
+
+# Generate the heatmap
+pheatmap(mat,
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50))
+```
+
+## Shh target genes, regardless of significance
+
+```{r}
+ens_ids <- mapIds(org.Mm.eg.db,
+                  keys = Shh_pathway_genes,
+                  column = "ENSEMBL",
+                  keytype = "SYMBOL",
+                  multiVals = "first")
+
+# Filter the vsd matrix for the TFs
+mat <- assay(vsd)[rownames(assay(vsd)) %in% ens_ids, ]
+
+# Update row names with gene symbols
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = rownames(mat),
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+# Ensure the row names are gene symbols
+rownames(mat) <- gene_symbols
+
+# Center the data
+mat <- mat - rowMeans(mat)
+
+# Generate the heatmap
+pheatmap(mat,
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50))
+```
+
+
+## Notch target genes, regardless of significance
+
+```{r}
+Notch_neg_genes <- c('Dll1', 'Dll3', 'Jag1', 'Jag2', 'Dll4')
+
+all_Notch <- c(Notch_pathway_genes, Notch_neg_genes)
+ens_ids <- mapIds(org.Mm.eg.db,
+                  keys = all_Notch,
+                  column = "ENSEMBL",
+                  keytype = "SYMBOL",
+                  multiVals = "first")
+
+# Filter the vsd matrix for the TFs
+mat <- assay(vsd)[rownames(assay(vsd)) %in% ens_ids, ]
+
+# Update row names with gene symbols
+gene_symbols <- mapIds(org.Mm.eg.db,
+                       keys = rownames(mat),
+                       column = "SYMBOL",
+                       keytype = "ENSEMBL",
+                       multiVals = "first")
+
+# Ensure the row names are gene symbols
+rownames(mat) <- gene_symbols
+
+# Center the data
+mat <- mat - rowMeans(mat)
+
+# Generate the heatmap
+pheatmap(mat,
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE, 
+         show_rownames = TRUE,  # Show gene symbols
+         annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+         color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50))
+```
+
+
+```{r}
+all_Shh <- c("Smo", "Boc", "Cdon", "Gas1", "Gli1", "Gli2", "Gli3", "Sufu", "Disp1", "Iqce", "Efcab7", "Ptch1", "Ptch2", "Hhip", "Sufu", "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7") #Zic2
+deseq2_results <- read.csv("../../results/tables/deseq2_tables/deseq2_resultsOrdered_genesymbol_padj.csv")
+
+shh_deseq2_results <- deseq2_results %>%
+  filter(symbol %in% all_Shh)
+
+shh_deseq2_results
+
+sig_shh <- shh_deseq2_results %>%
+  filter(padj < 0.05)
+sig_shh
+
+shh_deseq2_results <- shh_deseq2_results %>%
+  rename(ensembl = X)
+
+write.csv(shh_deseq2_results, "../../results/tables/deseq2_tables/deseq2_results_shh.csv", row.names = F)
+```
+
