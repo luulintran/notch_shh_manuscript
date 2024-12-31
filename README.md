@@ -33,7 +33,7 @@ Before running any analysis or generating figures, you need to set up the enviro
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/luulintran/notch_shh_manuscript
+   git clone https://github.com/luulintran/notch_shh_manuscript.git
    cd notch_shh_manuscript
    ```
 
