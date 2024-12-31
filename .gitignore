@@ -33,3 +33,4 @@ figures/figS2/*.Rapp.history
 *.RDataTmp
 *.log
 .DS_Store
+.Rproj.user
