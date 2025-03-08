@@ -46,3 +46,4 @@ tables/table_S_rbpjmotif_glia_progenitor.xlsx
 tables/table_S_rbpjmotif_neuron.xlsx
 tables/table_S_rbpjmotif_shh.xlsx
 analysis/04_make_bedfiles.R
+analysis/04_make_bedfiles.R
