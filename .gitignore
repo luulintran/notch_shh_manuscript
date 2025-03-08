@@ -34,3 +34,4 @@ figures/figS2/.Rapp.history
 *.log
 .DS_Store
 .Rproj.user/
+.RDataTmp1
