@@ -35,3 +35,14 @@ figures/figS2/.Rapp.history
 .DS_Store
 .Rproj.user/
 .RDataTmp1
+analysis/04_make_bedfiles.R
+analysis/04_make_bedfiles.R
+analysis/make_bedfiles_e13_e16.R
+notebooks/comparepeaks_e13_16.Rmd
+analysis/04_make_bedfiles.R
+notebooks/atacseq_ctrl_e13-e16_2025-02-18.Rmd
+tables/scripts/tableS_RBPJmotif_cellidentitygenes.R
+tables/table_S_rbpjmotif_glia_progenitor.xlsx
+tables/table_S_rbpjmotif_neuron.xlsx
+tables/table_S_rbpjmotif_shh.xlsx
+analysis/04_make_bedfiles.R
