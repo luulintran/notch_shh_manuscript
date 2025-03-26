@@ -136,11 +136,13 @@ rownames(mat) <- sig_symbols[sig_symbols %in% combined_gene_list]
 mat <- mat - rowMeans(mat)
 
 # Make Heatmap in specific order ***********************************************
-progenitor <- c('Nes', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Ednrb', 'Dleu7', 
+#progenitor <- c('Nes', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Ednrb', 'Dleu7', 
                 'Ncald','Rfx4', 'Bcan')
-progenitor <- c('Hes1', 'Dleu7', 'Rfx4', 'Sox2', 'Bcan', 'Ncald', 'Nes', 'Ednrb', 'Vim', 'Nr2e1')
-glia <- c('Ccnd1', 'Aldh1l1', 'Cntn1', 'Olig1', 'Olig2', 'Pdgfra', 'Sox10', 'Sox8', 'Sox9', 'Aqp4','Mbp')
-glia <- c('Sox8', 'Sox9', 'Aqp4', 'Olig2', 'Ccnd1', 'Aldh1l1', 'Cntn1', 'Sox10', 'Pdgfra', 'Olig2', 'Mbp')
+progenitor <- c('Hes1', 'Dleu7', 'Rfx4', 'Sox2', 'Bcan', 'Ncald', 'Nes', 
+                'Ednrb', 'Vim', 'Nr2e1')
+#glia <- c('Ccnd1', 'Aldh1l1', 'Cntn1', 'Olig1', 'Olig2', 'Pdgfra', 'Sox10', 'Sox8', 'Sox9', 'Aqp4','Mbp')
+glia <- c('Sox8', 'Sox9', 'Aqp4', 'Olig2', 'Ccnd1', 'Aldh1l1', 'Cntn1', 
+          'Sox10', 'Pdgfra', 'Olig2', 'Mbp')
 neuron <- c('Eomes', 'Neurod1', 'Neurog2', 'Neurog1', 'Btg2', 'Tbr1', 'Satb2',
             'Neurod4')
 
