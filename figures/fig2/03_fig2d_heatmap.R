@@ -15,7 +15,7 @@ res <- results(dds)
 
 # MAKE GENE LISTS: -------------------------------------------------------------
 # Gene lists are based on cell type markers to determine 
-# what cell identity progenitors are based on gene expression
+# what cell identity progenitors are based on open chromatin
 progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
                       'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb', 
                       'Eomes', 'Ccne2', 'Clspn', 'Gins2', 'Pcna', 
@@ -27,46 +27,53 @@ progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2',
                       'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 
                       'Cenpf', 'Cks2', 'Pttg1', 'Cdc20', 'Top2a', 
                       'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 
-                      'Kif20a')
+                      'Kif20a','Dleu7', 'Ncald', 'Rfx4', 'Bcan')
 
 RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 
                'Nr2e1', 'Hes1', 'Hes5', 'Ednrb') 
 
 IPC_genes <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 
-               'Gadd45g', 'Neurog1')
+               'Gadd45g')
 
 proliferative_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
                          'Vim', 'Nr2e1')
 
-neurogenic_genes <- c('Eomes', 'Neurog2', 'Neurog', 'Tuba1a', 'Btg2')
+neurogenic_genes <- c('Eomes', 'Neurog2', 'Tuba1a') 
 
 neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6', 
                     'Neurod2','Satb2', 'Gria2', 'Nrp1', 'Dab1', 
                     'Nrxn3', 'Neurod4')
 
 newborn_neurons <- c('Foxg1', 'Neurod1', 'Unc5d', 'Rnd2', 'Rnd3', 'Dcx', 
-                     'Pafah1b1', 'Cdk5')
+                     'Pafah1b1', 'Cdk5') 
+
+preOPC_genes <- c('Ascl1', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
+                  'Sall3', 'Gng12', 'Gsx2', 'Fam181b', 'Ccnd1')
 
 OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 
                'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
                'Lhfpl3', 'Cntn1')
 
-preOPC_genes <- c('Ascl1', 'Ccnd1', 'Dleu7', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
-                  'Sall3', 'Gng12', 'Ncald', 'Gsx2', 
-                  'Fam181b', 'Rfx4', 'Bcan')
+OL_genes <- c('Mbp', 'Plp1', 'Mag', 'Cnp', 'Mog', 'Cldn11')
 
-astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4', 'Sox9')
+glial_lineage <- c('Sox8', 'Sox9', 'Nfia')
+
+astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
+
+Shh_pathway_genes <- c('Gli1', 'Smo', 'Ptch1', 'Boc', 'Cdon', 'Gas1', 
+                       'Gli2','Ptch2', 'Hhip', 'Gli3')
 
 
-# Combine some of the lists to be more general
+
+#  COMBINE GENE LISTS TO MAKE MORE BROAD CATAGORIES: ---------------------------
 neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, 
                     newborn_neurons)
 
-gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes)
+gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes, glial_lineage, OL_genes)
 
 progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
 
-opc_all <- c(preOPC_genes, OPC_genes)
+ol_all <- c(preOPC_genes, OPC_genes, OL_genes)
 
 # ANNOTATE DESEQ2 RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: --------------------
 ensembl_ids <- rownames(res)
@@ -131,7 +138,9 @@ mat <- mat - rowMeans(mat)
 # Make Heatmap in specific order ***********************************************
 progenitor <- c('Nes', 'Sox2', 'Vim', 'Nr2e1', 'Hes1', 'Ednrb', 'Dleu7', 
                 'Ncald','Rfx4', 'Bcan')
-glia <- c('Ccnd1', 'Aldh1l1', 'Cntn1', 'Olig2', 'Olig2', 'Pdgfra', 'Sox10')
+progenitor <- c('Hes1', 'Dleu7', 'Rfx4', 'Sox2', 'Bcan', 'Ncald', 'Nes', 'Ednrb', 'Vim', 'Nr2e1')
+glia <- c('Ccnd1', 'Aldh1l1', 'Cntn1', 'Olig1', 'Olig2', 'Pdgfra', 'Sox10', 'Sox8', 'Sox9', 'Aqp4','Mbp')
+glia <- c('Sox8', 'Sox9', 'Aqp4', 'Olig2', 'Ccnd1', 'Aldh1l1', 'Cntn1', 'Sox10', 'Pdgfra', 'Olig2', 'Mbp')
 neuron <- c('Eomes', 'Neurod1', 'Neurog2', 'Neurog1', 'Btg2', 'Tbr1', 'Satb2',
             'Neurod4')
 
@@ -155,7 +164,7 @@ ordered_combined_gene_list_heatmap <- pheatmap(
     colData(vsd)[, "condition", drop=FALSE]),
   color = colorRampPalette(c("#76BAE0", "white", "#B8396B"))(50))
 
-filename = "figures/fig2/fig2d_heatmap.pdf"
+filename = "figures/fig2/fig2d_heatmap_ordered_032625.pdf"
 pdf(filename, width = 6, height = 8)
 print(ordered_combined_gene_list_heatmap)
 
