@@ -24,7 +24,8 @@ progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2',
                       'Ccna', 'Cdca5', 'Esco2', 'Aurkb', 
                       'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 
                       'Cenpf', 'Cks2', 'Pttg1', 'Cdc20', 'Top2a', 
-                      'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 'Kif20a')
+                      'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 
+                      'Kif20a','Dleu7', 'Ncald', 'Rfx4', 'Bcan')
 
 RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 
                'Nr2e1', 'Hes1', 'Hes5', 'Ednrb') 
@@ -44,13 +45,16 @@ neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6',
 newborn_neurons <- c('Foxg1', 'Neurod1', 'Unc5d', 'Rnd2', 'Rnd3', 'Dcx', 
                      'Pafah1b1', 'Cdk5') 
 
+preOPC_genes <- c('Ascl1', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
+                  'Sall3', 'Gng12', 'Gsx2', 'Fam181b', 'Ccnd1')
+
 OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 
                'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
                'Lhfpl3', 'Cntn1')
 
-preOPC_genes <- c('Ascl1', 'Ccnd1', 'Dleu7', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
-                  'Sall3', 'Gng12', 'Ncald', 'Gsx2', 
-                  'Fam181b', 'Rfx4', 'Bcan')
+OL_genes <- c('Mbp', 'Plp1', 'Mag', 'Cnp', 'Mog', 'Cldn11')
+
+glial_lineage <- c('Sox8', 'Sox9', 'Nfia')
 
 astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
 
@@ -63,11 +67,11 @@ Shh_pathway_genes <- c('Gli1', 'Smo', 'Ptch1', 'Boc', 'Cdon', 'Gas1',
 neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, 
                     newborn_neurons)
 
-gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes)
+gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes, glial_lineage, OL_genes)
 
 progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
 
-opc_all <- c(preOPC_genes, OPC_genes)
+ol_all <- c(preOPC_genes, OPC_genes, OL_genes)
 
 # RETRIEVE NORMALIZED READ COUNTS: ---------------------------------------------
 # Load RDS file that contains dbObj following normalization
@@ -299,7 +303,7 @@ progenitor_plot <- norm_accessibility_plot_function(
   "Normalized Accessibility of Progenitor Genes")
 
 filename = 
-  "figures/fig4/fig4a_normcountsplot_progenitor.pdf" 
+  "figures/fig4/fig4a_normcountsplot_progenitor_032625.pdf" 
 pdf(filename, width = 5, height = 5)
 print(progenitor_plot) 
 
@@ -317,7 +321,7 @@ neurogenic_plot <- norm_accessibility_plot_function(
   "Normalized Accessibility of Neurogenic Genes") 
 
 filename = 
-  "figures/fig4/fig4b_normcountsplot_neurogenic.pdf"
+  "figures/fig4/fig4b_normcountsplot_neurogenic_032625.pdf"
 pdf(filename, width = 5, height = 5)
 print(neurogenic_plot) 
 
@@ -340,7 +344,7 @@ gliogenic_plot <- norm_accessibility_plot_function(
 
 # change filename
 filename = 
-  "figures/fig4/fig4c_normcountsplot_gliogenic.pdf" 
+  "figures/fig4/fig4c_normcountsplot_gliogenic_032625.pdf" 
 pdf(filename, width = 5, height = 5)
 print(gliogenic_plot)
 
@@ -348,19 +352,19 @@ dev.off()
 
 
 # OL LINEAGE NORM ACCESSIBILITY: ---------------------------------------------------------------------------------------
-norm_counts <- normalized_counts_function(merged_df, opc_all)
+norm_counts <- normalized_counts_function(merged_df, ol_all)
 avg_counts <- avg_read_counts_function(norm_counts)
 stats_test_result <- stats_test_function(norm_counts)
 
 
 # change plot name
-opc_plot <- norm_accessibility_plot_function(
+ol_plot <- norm_accessibility_plot_function(
   avg_counts, 
   stats_test_result, 
   "Normalized Accessibility of OL Lineage Genes")
 
 filename = 
-  "figures/fig4/fig4d_normcountsplot_ol.pdf"
+  "figures/fig4/fig4d_normcountsplot_ol_032625.pdf"
 pdf(filename, width = 5, height = 5)
 print(opc_plot)
 
@@ -379,7 +383,7 @@ shh_plot <- norm_accessibility_plot_function(
   "Normalized Accessibility of SHH Pathway Genes")
 
 filename = 
-  "figures/fig4/fig4g_normcountsplot_shh.pdf"
+  "figures/fig4/fig4g_normcountsplot_shh_032625.pdf"
 pdf(filename, width = 5, height = 5)
 print(shh_plot)
 
