@@ -102,11 +102,11 @@ selected_df_datasumm <- rbind(selected_CTRL_fold_shh_pos_datasumm,
                               selected_NICD_fold_shh_neg_datasumm)
 
 # Change order of genes
-selected_df$SYMBOL <- factor(selected_df$SYMBOL, levels = c('Ptch1', 'Ptch2', 
-                                                            'Gas1', 'Cdon', 
-                                                            'Boc', 'Gli3', 
-                                                            'Gli2', 'Gli1', 
-                                                            'Smo', 'Hhip'))
+selected_df$SYMBOL <- factor(selected_df$SYMBOL, levels = c('Ptch1', 'Boc',
+                                                            'Gli3', 'Gli2',
+                                                            'Gas1', 'Cdon',
+                                                            'Gli1', 'Smo',
+                                                            'Hhip'))
 
 # Bar plot colors: -------------------------------------------------------------
 bar_colors_midnights <- c("#121D27", "#5A658B", "#6F86A2", "#85A7BA", "#AA9EB6")
