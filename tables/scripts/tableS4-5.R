@@ -205,25 +205,29 @@ sox10_NICD_motif_inst <- merge_dataframes(NICD_enriched, SOX10_NICD)
 
 
 # MAKE GENE LISTS: -------------------------------------------------------------
-progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1', 
-                      'Hes1', 'Hes5', 'Ednrb', 'Eomes', 'Ccne2', 'Clspn', 
-                      'Gins2', 'Pcna', 'Atad2', 'Mcm7', 'Mcm3', 'Slbp', 'Gmnn', 
-                      'Kiaa0101', 'Mcm10', 'Rad51', 'Cdc45', 'Exo1', 'Hist1h4c', 
-                      'Cdk1', 'Hist1h1b', 'Hist1h1c', 'Hist1h1e', 'Ube2c', 
-                      'Rrm2', 'Zwint', 'Hmgb2', 'Ccna', 'Cdca5', 'Esco2', 
-                      'Aurkb', 'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 
+progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
+                      'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb', 
+                      'Eomes', 'Ccne2', 'Clspn', 'Gins2', 'Pcna', 
+                      'Atad2', 'Mcm7', 'Mcm3', 'Slbp', 'Gmnn', 
+                      'Kiaa0101', 'Mcm10', 'Rad51', 'Cdc45', 'Exo1', 
+                      'Hist1h4c', 'Cdk1', 'Hist1h1b', 'Hist1h1c', 
+                      'Hist1h1e', 'Ube2c', 'Rrm2', 'Zwint', 'Hmgb2', 
+                      'Ccna', 'Cdca5', 'Esco2', 'Aurkb', 
+                      'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 
                       'Cenpf', 'Cks2', 'Pttg1', 'Cdc20', 'Top2a', 
-                      'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 'Kif20a')
+                      'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 
+                      'Kif20a','Dleu7', 'Ncald', 'Rfx4', 'Bcan')
 
-RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 'Nr2e1', 
-               'Hes1', 'Hes5', 'Ednrb') 
+RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 
+               'Nr2e1', 'Hes1', 'Hes5', 'Ednrb') 
 
-IPC_genes <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 'Gadd45g')
+IPC_genes <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 
+               'Gadd45g')
 
 proliferative_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
                          'Vim', 'Nr2e1')
 
-neurogenic_genes <- c('Eomes', 'Neurog2', 'Tuba1a')
+neurogenic_genes <- c('Eomes', 'Neurog2', 'Tuba1a') 
 
 neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6', 
                     'Neurod2','Satb2', 'Gria2', 'Nrp1', 'Dab1', 
@@ -232,26 +236,29 @@ neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6',
 newborn_neurons <- c('Foxg1', 'Neurod1', 'Unc5d', 'Rnd2', 'Rnd3', 'Dcx', 
                      'Pafah1b1', 'Cdk5') 
 
-OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 'Cnp', 
-               'Cspg4', 'Matn4', 'Brinp3', 'Lhfpl3', 'Cntn1')
+preOPC_genes <- c('Ascl1', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
+                  'Sall3', 'Gng12', 'Gsx2', 'Fam181b', 'Ccnd1')
 
-preOPC_genes <- c('Ascl1', 'Ccnd1', 'Dleu7', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
-                  'Sall3', 'Gng12', 'Ncald', 'Gsx2', 'Fam181b', 'Rfx4', 'Bcan')
+OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 
+               'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
+               'Lhfpl3', 'Cntn1')
+
+OL_genes <- c('Mbp', 'Plp1', 'Mag', 'Cnp', 'Mog', 'Cldn11')
+
+glial_lineage <- c('Sox8', 'Sox9', 'Nfia')
 
 astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
 
 
-# COMBINE GENE LISTS TO BE MORE GENERAL: ---------------------------------------
+#  COMBINE GENE LISTS TO MAKE MORE BROAD CATAGORIES: ---------------------------
+neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, 
+                    newborn_neurons)
 
-
-neurogenic_all <- c(IPC_genes, neurogenic_genes, 
-                    neuronal_genes, newborn_neurons)
-
-gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes)
+gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes, glial_lineage, OL_genes)
 
 progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
 
-opc_all <- c(preOPC_genes, OPC_genes)
+ol_all <- c(preOPC_genes, OPC_genes, OL_genes)
 
 
 # MAKE FUNCTION TO FILTER PEAKS BASED ON GENE LISTS: ---------------------------
