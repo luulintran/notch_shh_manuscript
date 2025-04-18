@@ -1,0 +1,77 @@
+# READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: ---------------------
+dds <- readRDS(rds_deseq2_results)
+res <- results(dds)
+
+# ANNOTATE RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: ---------------------------
+ensembl_ids <- rownames(res)
+
+# annotate with gene symobols using org.Mm.eg.db package
+res$symbol <- mapIds(org.Mm.eg.db,
+                     keys=ensembl_ids,
+                     column="SYMBOL",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+# annotate with entrez ids
+res$entrez <- mapIds(org.Mm.eg.db,
+                     keys=ensembl_ids,
+                     column="ENTREZID",
+                     keytype="ENSEMBL",
+                     multiVals="first")
+
+# Re-order res based on padj
+resOrdered <- res[order(res$padj),]
+
+# Move symbol and entrez columns to the front
+resOrdered <- resOrdered[, c("symbol", 
+                             "entrez", 
+                             setdiff(colnames(resOrdered), 
+                                     c("symbol", "entrez")))]
+
+# PREPARE DATA FOR HEATMAP SHOWING SPECIFIC GENE SET: --------------------------
+
+# Remove NAs from padj before filtering for significant genes with padj < 0.05
+sig_res <- resOrdered[!is.na(resOrdered$padj) & resOrdered$padj < 0.05, ]
+
+# Extract rownames/ensembl id's of significant DEGs
+sig_genes <- rownames(sig_res)
+
+# Map ensembl id's to symbols
+sig_symbols <- mapIds(org.Mm.eg.db,
+                      keys = sig_genes,
+                      column = "SYMBOL",
+                      keytype = "ENSEMBL",
+                      multiVals = "first")
+
+# Filter sig_genes list for genes in Shh_gene_list by symbol
+selected_genes <- sig_genes[sig_symbols %in% heatmap_genes_list]
+
+# EXTRACT TRANSFORMED VALUES: **************************************************
+vsd <- vst(dds, blind=FALSE)
+
+# Subset assay matrix for the selected genes
+mat <- assay(vsd)[selected_genes, ]
+
+# Update row names with gene symbols for the selected genes
+rownames(mat) <- sig_symbols[sig_symbols %in% heatmap_genes_list]
+
+# Center the data
+mat <- mat - rowMeans(mat)
+
+
+# PLOT HEATMAP: ----------------------------------------------------------------
+heatmap_sig_geneslist <- pheatmap(
+  mat,
+  cluster_rows = TRUE, 
+  cluster_cols = TRUE, 
+  show_rownames = TRUE, 
+  annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+  color = piyg_colors
+)
+
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 6)
+print(heatmap_sig_geneslist)
+
+dev.off()
+
+print(paste0(filename_heatmap, " saved in ", output_dir_figures))
