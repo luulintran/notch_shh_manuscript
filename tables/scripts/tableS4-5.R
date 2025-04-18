@@ -1,18 +1,22 @@
 # Run after running 'analysis/02_diffbind_e16.R'
 # Requires .txt files resulting from HOMER findmotifsGenome.pl
 
-# SET UP
-library(DiffBind)
-library(ChIPseeker)
-library(org.Mm.eg.db)
-library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-library(tidyverse)
-library(dplyr)
-library(readr)
+# DEFINE FILES AND PATHS: ------------------------------------------------------
+# input DBA object/ diffbind resultds rds file
+rds_dbObj <- "data/processed_data/atacseq_e16/r_objects/diffbind_dbObj.rds"
+
+
+# READ IN HOMER MOTIF INSTANCE FILES FROM HOMER findMotifsGenome.pl: -----------
+TF_CTRL <- read.csv(
+  "data/processed_data/atacseq_e16/homer_output/1NFIA_2NEUROD2_3MEF2C_14EOMES_CTRL_findMotifs_inst.txt",  
+  sep ="\t")
+TF_NICD <- read.csv(
+  "data/processed_data/atacseq_e16/homer_output/1LHX1_2NF1_8SOX10_NICD_findMotifs_inst.txt",  
+  sep ="\t")
 
 # LOAD RDS FILE OF DIFFBIND DBA OBJECT: ----------------------------------------
 dbObj <- readRDS(
-  file = "data/processed_data/atacseq_e16/r_objects/diffbind_dbObj.rds")
+  file = rds_dbObj)
 
 # Create dba report with results including stats
 dbObj.DB <- dba.report(dbObj)
@@ -71,15 +75,6 @@ CTRL_enriched <- peak_list %>%
 
 NICD_enriched <- peak_list %>% 
   dplyr::filter(FDR < 0.05 & Fold > 0)
-
-# READ IN HOMER MOTIF INSTANCE FILES FROM HOMER findMotifsGenome.pl: -----------
-
-TF_CTRL <- read.csv(
-  "data/processed_data/atacseq_e16/homer_output/1NFIA_2NEUROD2_3MEF2C_14EOMES_CTRL_findMotifs_inst.txt",  
-  sep ="\t")
-TF_NICD <- read.csv(
-  "data/processed_data/atacseq_e16/homer_output/1LHX1_2NF1_8SOX10_NICD_findMotifs_inst.txt",  
-  sep ="\t")
 
 # SEPARATE MOTIF INSTANCE DFs BASED ON TF: -------------------------------------
 
@@ -253,13 +248,16 @@ astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
 #  COMBINE GENE LISTS TO MAKE MORE BROAD CATAGORIES: ---------------------------
 neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, 
                     newborn_neurons)
+neurogenic_all <- unique(neurogenic_all)
 
 gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes, glial_lineage, OL_genes)
+gliogenic_all <- unique(gliogenic_all)
 
 progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
+progenitor_all <- unique(progenitor_all)
 
 ol_all <- c(preOPC_genes, OPC_genes, OL_genes)
-
+ol_all <- unique(ol_all)
 
 # MAKE FUNCTION TO FILTER PEAKS BASED ON GENE LISTS: ---------------------------
 

@@ -1,16 +1,19 @@
-# Run this after running 'analysis/01_deseq2_e16.R'
+# RUN DESEQ2 ANALYSIS SCRIPT: --------------------------------------------------
+# Run 'analysis/01_deseq2_e16.R' if you have not already
+# source("analysis/01_deseq2_e16.R")
 
-# SET UP
-library(DESeq2)
-library(org.Mm.eg.db)
-library(tidyverse)
-library(readr)
-library(dplyr)
+# DEFINE FILES AND PATHS: ------------------------------------------------------
+# input deseq2 results rds file
+rds_deseq2_results <- "data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds"
 
+# output directory for supplementary tables
+output_dir_tables <- "tables"
 
+# output filename for table
+filename <- "table_S1_rnaseq_e16_deseq2_results.csv"
 
 # LOAD DESEQ2 DDS OBJECT FROM RDS FILE: ----------------------------------------
-dds <- readRDS("data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds")
+dds <- readRDS(rds_deseq2_results)
 
 # STORE DESEQ2 RESULTS: --------------------------------------------------------
 res <- results(dds)
@@ -38,12 +41,21 @@ resOrdered <- res[order(res$padj),]
 resOrdered <- resOrdered[, c("symbol", 
                              "entrez", 
                              setdiff(colnames(resOrdered), 
-                                     c("symbol", "entrez")))]
+                                     c("symbol", "entrez")
+                                     )
+                             )
+                         ]
 
 # Rename resOrdered to a simpler name as dataframe
 out <- as.data.frame(resOrdered)
 
 # Export CSV file with gene symbols and entrez ids
-write.csv(out, file = "tables/table_S1_rnaseq_e16_deseq2_results.csv")
+write.csv(out, 
+          file = file.path(
+            output_dir_tables, 
+            filename)
+          )
 
-print("Table_S1 was generated and saved in tables/")
+print(paste0(filename, " was generated and saved in ", output_dir_tables))
+
+      
