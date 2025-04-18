@@ -1,13 +1,5 @@
-# Run after running 'analysis/02_diffbind.R' and 'tables/scripts/tableS3.R'
-
-# SET UP
-library(tidyverse)
-library(dplyr)
-library(readr)
-library(ggplot2)
-
 # READ DIFFBIND RESULTS FILE WITH GENE ANNOTATIONS AND STATS RESULTS: ----------
-diffbind_res_df <- read.csv("tables/table_S3_atacseq_e16_diffbind_results.csv")
+diffbind_res_df <- read.csv(csv_diffbind_results)
 
 # SEPARATE BETWEEN CTRL-ENRICHED (Fold < 0) and NICD-ENRICHED (Fold > 0): ------
 # This dataframe has everything including the stats info
@@ -36,13 +28,6 @@ NICD_enriched_fold <- NICD_enrich[, c("SYMBOL", "Fold")]
 NICD_enriched_gene_logfold <- NICD_enriched_fold %>%
   group_by(SYMBOL) %>%
   summarise(logFoldChange = mean(Fold, na.rm = TRUE))
-
-
-# SHH PATHWAY GENES SELECTED FOR PLOT: -----------------------------------------
-
-selected_shh_pos <- c('Smo', 'Gli1', 'Gli2', 'Gas1', 'Cdon', 'Boc')
-
-selected_shh_neg <- c('Ptch1', 'Ptch2', 'Gli3', 'Hhip')
 
 # SUMMARIZE DATA FOR SHH GENES: ------------------------------------------------
 #shh positive CTRL
@@ -109,8 +94,6 @@ selected_df$SYMBOL <- factor(selected_df$SYMBOL, levels = c('Ptch1', 'Boc',
                                                             'Hhip'))
 
 # Bar plot colors: -------------------------------------------------------------
-bar_colors_midnights <- c("#121D27", "#5A658B", "#6F86A2", "#85A7BA", "#AA9EB6")
-
 #Repeat the colors to match the number of unique genes
 num_genes <- length(unique(selected_df$SYMBOL))
 bar_colors_cycle <- rep(bar_colors_midnights, length.out = num_genes)
@@ -147,10 +130,15 @@ shh_log2foldchange_plot <- ggplot(selected_df_datasumm, aes(x= SYMBOL,
   geom_hline(yintercept = 0, color = "black") + 
   theme(legend.position = "none")
 
-filename = "figures/fig4/fig4h_log2foldchangeplot_shh.pdf"
-pdf(filename, width = 5, height = 5)
+# SAVE PLOT: -------------------------------------------------------------------
+pdf(file.path(output_dir_figures, filename_logfoldchange), width = 5, height = 5)
 print(shh_log2foldchange_plot)
 
 dev.off()
 
-print("Log2 Fold change plot for SHH genes generated and saved in figures/fig4")
+print(
+  paste0(
+    filename_logfoldchange, 
+    " generated and saved in ",output_dir_figures
+    )
+  )

@@ -1,15 +1,5 @@
-
-# Run after running 'analysis/03_deseq2_e17.R'
-library(pheatmap)
-library(DESeq2)
-library(org.Mm.eg.db)
-library(dplyr)
-library(tidyverse)
-library(readr)
-
-
 # READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: ---------------------
-dds <- readRDS("data/processed_data/rnaseq_e17/r_objects/deseq2_dds_e17.rds")
+dds <- readRDS(rds_deseq2_results)
 res <- results(dds)
 
 # ANNOTATE RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: ---------------------------
@@ -36,13 +26,6 @@ resOrdered <- resOrdered[, c("symbol",
                              "entrez", 
                              setdiff(colnames(resOrdered), 
                                      c("symbol", "entrez")))]
-
-# MAKE LIST OF SELECTED SHH PATHWAY GENES: -------------------------------------
-Shh_gene_list <- c("Smo", "Boc", "Cdon", 
-             "Gas1", "Gli1", "Gli2", "Gli3", 
-             "Sufu", "Disp1", "Iqce", "Efcab7", 
-             "Ptch1", "Ptch2", "Hhip", "Sufu", 
-             "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7")
 
 # PREPARE DATA FOR HEATMAP SHOWING SPECIFIC GENE SET: --------------------------
 
@@ -82,12 +65,12 @@ heatmap_sig_shh <- pheatmap(
   cluster_cols = TRUE, 
   show_rownames = TRUE, 
   annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
-  color = colorRampPalette(c("#CDA2CC", "white", "#FF6B35"))(50)) 
+  color = colorRampPalette(c(control_color, "white", mutant_color))(50)) 
 
-filename = "figures/fig5/fig5h_heatmap.pdf"
-pdf(filename, width = 5, height = 6)
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 6)
 print(heatmap_sig_shh)
 
 dev.off()
 
-print("Heatmap saved in figures/fig5")
+print(paste0(filename_heatmap, " saved in ", output_dir_figures))

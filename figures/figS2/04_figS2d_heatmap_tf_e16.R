@@ -1,14 +1,5 @@
-# Run after running 'analysis/01_deseq2_e16.R' 
-
-library(pheatmap)
-library(DESeq2)
-library(org.Mm.eg.db)
-library(tidyverse)
-library(readr)
-library(dplyr)
-
 # READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: --------------------
-dds <- readRDS("data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds")
+dds <- readRDS(rds_deseq2_results_e16)
 # Store results in res
 res <- results(dds)
 
@@ -37,14 +28,6 @@ resOrdered <- resOrdered[, c("symbol",
                              setdiff(colnames(resOrdered), 
                                      c("symbol", "entrez")))
 ]
-
-# MAKE LIST OF TRANSCRIPTION FACTORS: ------------------------------------------
-# These TFs have motifs enriched in sites with decreased or 
-# increased accessibility
-
-# Heatmap with specific genes of TFs from atac-seq motif enrichment 
-TFs <- c('Lhx1','Lhx2', 'Nfix', 'Nfia', 'Nfic', 'Sox2', 'Sox8', 'Sox9','Sox10', 
-         'Neurog1', 'Neurog2', 'Neurod2', 'Mef2c', 'Mef2d', 'Eomes', 'Tbr1')
 
 # PREPARE DATA FOR HEATMAP SHOWING SPECIFIC GENE SET: --------------------------
 
@@ -77,11 +60,6 @@ rownames(mat) <- sig_symbols[sig_symbols %in% TFs]
 mat <- mat - rowMeans(mat)
 
 
-# ******************************************************************************
-desired_order <- c('Lhx1','Lhx2', 'Nfix', 'Nfia', 'Nfic', 'Sox2', 'Sox8', 
-                   'Sox9','Sox10', 'Neurog1', 'Neurog2', 'Neurod2', 'Mef2c', 
-                   'Mef2d', 'Eomes', 'Tbr1') 
-
 # Ensure the order vector only includes genes present in the matrix
 ordered_genes <- desired_order[desired_order %in% rownames(mat)]
 
@@ -95,12 +73,12 @@ tf_heatmap <- pheatmap(
   cluster_cols = TRUE, 
   show_rownames = TRUE, 
   annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
-  color = colorRampPalette(c("#CDA2CC", "white", "#FF6B35"))(50))
+  color = colorRampPalette(c(downreg_color, "white", upreg_color))(50))
 
-filename = "figures/figS2/figS2d_heatmap_tf_e16.pdf"
-pdf(filename, width = 4, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap_e16), width = 4, height = 5)
 print(tf_heatmap)
 
 dev.off()
 
-print("heatmap saved in figures/figS2")
+print(paste0(filename_heatmap_e16, " saved in ", output_dir_figures))

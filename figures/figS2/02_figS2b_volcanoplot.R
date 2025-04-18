@@ -1,32 +1,14 @@
-# Run after running 'analysis/03_deseq2_e17.R' and 'tables/scripts/tableS6.R'
-
-# SET UP
-library(ggplot2)
-library(DESeq2)
-library(extrafont)
-library(tidyverse)
-library(readr)
-library(dplyr)
-
+# READ IN DATA: ----------------------------------------------------------------
 # Load CSV file of DESeq2 results, ordered by padj and containing gene symbol 
 # and entrez id's.
-res_df <- read.csv("tables/table_S6_rnaseq_e17_deseq2_results.csv")
+res_df <- read.csv(csv_deseq2_results)
 
 # MAKE VOLCANO PLOT WITH SPECIFIC GENES LABELED: -------------------------------
-
-# Make a list of selected genes. Here, I want to show Notch genes, 
-# a few neurogenic genes, and a few progenitor and gliogenic genes.
-specific_genes <- c('Dll3', 'Dll1', 'Neurod4', 'Hey1', 
-                    'Neurog2', 'Hey1', 'Hes5', 'Notch1', 
-                    'Sox2', 'Sox9', 'Notch2')
 
 # filter the deseq2 results (res_df) dataframe to include only the genes 
 # in the specific_genes list based on symbol column
 specific_genes_res <- res_df %>%
   dplyr:: filter(symbol %in% specific_genes)
-
-# define significance threshold (padj 0.05)
-alpha <- 0.05
 
 # Use mutate() to make color_group column in res_df based on log2FoldChange and 
 # padj values
@@ -39,9 +21,9 @@ res_df <- res_df %>%
   dplyr::mutate(
     color_group = 
       # if log2FoldChange < 0 and padj < alpha, then make blue
-      ifelse(log2FoldChange < 0 & padj < alpha, "#CDA2CC", 
+      ifelse(log2FoldChange < 0 & padj < alpha, downreg_color, 
              # if log2FoldChange > 0 and padj < alpha, then make pink
-             ifelse(log2FoldChange > 0 & padj < alpha, "#FF6B35", 
+             ifelse(log2FoldChange > 0 & padj < alpha, upreg_color, 
                     # else, make grey
                     "grey"))
   )
@@ -50,8 +32,8 @@ res_df <- res_df %>%
 specific_genes_res <- specific_genes_res %>%
   dplyr:: mutate(
     color_group =
-      ifelse(log2FoldChange < 0 & padj < alpha, "#CDA2CC",
-             ifelse(log2FoldChange > 0 & padj < alpha, "#FF6B35", 
+      ifelse(log2FoldChange < 0 & padj < alpha, downreg_color,
+             ifelse(log2FoldChange > 0 & padj < alpha, upreg_color, 
                     "grey"))
     )
 
@@ -63,7 +45,7 @@ specific_genes_res <- specific_genes_res %>%
 
 volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) + 
   geom_point(aes(color = color_group), alpha = 0.8, size = 0.5) + 
-  scale_color_manual(values = c("#CDA2CC", "#FF6B35", "grey")) + 
+  scale_color_manual(values = c(downreg_color, upreg_color, "grey")) + 
   theme_minimal(base_family = "Arial", base_size = 8) + 
   labs(
     title = "NICD vs CTRL E17.5",
@@ -78,7 +60,7 @@ volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
   geom_point(data = specific_genes_res, aes(fill = color_group), 
              color = "black", size = 0.5, shape = 21, stroke = 0.5) + 
   # Set fill color for specific genes
-  scale_fill_manual(values = c("#CDA2CC", "#FF6B35", "grey")) + 
+  scale_fill_manual(values = c(downreg_color, upreg_color, "grey")) + 
   # Add gene labels with ggrepel
   ggrepel::geom_text_repel(
     data = specific_genes_res, 
@@ -94,11 +76,10 @@ volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
   coord_cartesian(xlim = c(-10, 10), ylim = c(0, 100))
 
 
-# Set filename
-filename = "figures/figS2/figS2b_volcanoplot.pdf"
-pdf(filename, width = 2.5, height = 2.5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_volcanoplot), width = 2.5, height = 2.5)
 print(volcano_plot)
 
 dev.off()
 
-print("Volcano plot generated and saved in figures/figS2/")
+print(paste0(filename_volcanoplot, " generated and saved in ", output_dir_figures))

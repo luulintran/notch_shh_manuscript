@@ -1,81 +1,6 @@
-# Run after running 'analysis/02_diffbind.R' and 'tables/scripts/tableS3.R'
-
-# SET UP
-library(DiffBind)
-library(ChIPseeker)
-library(org.Mm.eg.db)
-library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-library(tidyverse)
-library(dplyr)
-library(readr)
-library(ggplot2)
-library(car)
-
-# MAKE GENE LISTS: -------------------------------------------------------------
-# Gene lists are based on cell type markers to determine 
-# what cell identity progenitors are based on open chromatin
-progenitor_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
-                      'Vim', 'Nr2e1', 'Hes1', 'Hes5', 'Ednrb', 
-                      'Eomes', 'Ccne2', 'Clspn', 'Gins2', 'Pcna', 
-                      'Atad2', 'Mcm7', 'Mcm3', 'Slbp', 'Gmnn', 
-                      'Kiaa0101', 'Mcm10', 'Rad51', 'Cdc45', 'Exo1', 
-                      'Hist1h4c', 'Cdk1', 'Hist1h1b', 'Hist1h1c', 
-                      'Hist1h1e', 'Ube2c', 'Rrm2', 'Zwint', 'Hmgb2', 
-                      'Ccna', 'Cdca5', 'Esco2', 'Aurkb', 
-                      'Kif18b', 'Ckap2l', 'Hjurp', 'Cdca8', 'Ccnb1', 
-                      'Cenpf', 'Cks2', 'Pttg1', 'Cdc20', 'Top2a', 
-                      'Nusap1', 'Cenpa', 'Psrc1', 'Gas2l3', 'Plk1', 
-                      'Kif20a','Dleu7', 'Ncald', 'Rfx4', 'Bcan')
-
-RGC_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 'Vim', 
-               'Nr2e1', 'Hes1', 'Hes5', 'Ednrb') 
-
-IPC_genes <- c('Eomes', 'Sema3c', 'Neurod1', 'Neurog2', 'Sstr2', 
-               'Gadd45g')
-
-proliferative_genes <- c('Fabp7', 'Nes', 'Pax6', 'Slc1a3', 'Sox2', 
-                         'Vim', 'Nr2e1')
-
-neurogenic_genes <- c('Eomes', 'Neurog2', 'Tuba1a') 
-
-neuronal_genes <- c('Map2', 'Mapt', 'Rbfox3', 'Tbr1', 'Tubb3', 'Neurod6', 
-                    'Neurod2','Satb2', 'Gria2', 'Nrp1', 'Dab1', 
-                    'Nrxn3', 'Neurod4')
-
-newborn_neurons <- c('Foxg1', 'Neurod1', 'Unc5d', 'Rnd2', 'Rnd3', 'Dcx', 
-                     'Pafah1b1', 'Cdk5') 
-
-preOPC_genes <- c('Ascl1', 'Egfr', 'Egr1', 'Qk', 'Gas1', 
-                  'Sall3', 'Gng12', 'Gsx2', 'Fam181b', 'Ccnd1')
-
-OPC_genes <- c('Sox10', 'Pdgfra', 'Olig1', 'Olig2', 'Ascl1', 'Gng12', 
-               'Cnp', 'Cspg4', 'Matn4', 'Brinp3', 
-               'Lhfpl3', 'Cntn1')
-
-OL_genes <- c('Mbp', 'Plp1', 'Mag', 'Cnp', 'Mog', 'Cldn11')
-
-glial_lineage <- c('Sox8', 'Sox9', 'Nfia')
-
-astrocyte_genes <- c('Aldh1l1', 'Fabp7', 'Aldoc', 'Hes5', 'Aqp4')
-
-Shh_pathway_genes <- c('Gli1', 'Smo', 'Ptch1', 'Boc', 'Cdon', 'Gas1', 
-                       'Gli2','Ptch2', 'Hhip', 'Gli3')
-
-
-
-#  COMBINE GENE LISTS TO MAKE MORE BROAD CATAGORIES: ---------------------------
-neurogenic_all <- c(IPC_genes, neurogenic_genes, neuronal_genes, 
-                    newborn_neurons)
-
-gliogenic_all <- c(OPC_genes, preOPC_genes, astrocyte_genes, glial_lineage, OL_genes)
-
-progenitor_all <- c(progenitor_genes, RGC_genes, proliferative_genes)
-
-ol_all <- c(preOPC_genes, OPC_genes, OL_genes)
-
 # RETRIEVE NORMALIZED READ COUNTS: ---------------------------------------------
 # Load RDS file that contains dbObj following normalization
-dbObj <- readRDS("data/processed_data/atacseq_e16/r_objects/norm_read_counts_dbObj.rds")
+dbObj <- readRDS(rds_normcounts)
 
 # Extract normalized read counts
 norm_counts <- dba.peakset(dbObj, bRetrieve = TRUE, DataType = DBA_DATA_FRAME)
@@ -126,7 +51,7 @@ annotated_peaks_subset <- subset(annotated_peaks,
 
 
 # READ DIFFBIND RESULTS FILE CONTAINING SIGNIFICANT DIFFERENTIAL PEAKS: --------
-diffbind_res_df <- read.csv("tables/table_S3_atacseq_e16_diffbind_results.csv")
+diffbind_res_df <- read.csv(csv_diffbind_results)
 
 # merge above dataframe with the new dataframe (merged_df) 
 # with the normalized read counts. 
@@ -269,7 +194,7 @@ norm_accessibility_plot_function <- function(avg_counts, stats_test_result, plot
     geom_boxplot(width = 0.1, 
                  position = position_dodge(width = 0.75), 
                  fill = "white") +
-    scale_fill_manual(values = c("#bdb6d8", "#a3678c")) +
+    scale_fill_manual(values = c(control_color, mutant_color)) +
     labs(title = plot_title,
          x = "Condition",
          y = "log2(Normalized Read Counts + 1)") +
@@ -302,12 +227,13 @@ progenitor_plot <- norm_accessibility_plot_function(
   stats_test_result, 
   "Normalized Accessibility of Progenitor Genes")
 
-filename = 
-  "figures/fig4/fig4a_normcountsplot_progenitor_032625.pdf" 
-pdf(filename, width = 5, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_progenitor), width = 5, height = 5)
 print(progenitor_plot) 
 
 dev.off()
+
+print(paste0("Saved ", filename_progenitor))
 
 
 # NEUROGENIC NORM ACCESSIBILITY: -----------------------------------------------
@@ -320,12 +246,13 @@ neurogenic_plot <- norm_accessibility_plot_function(
   stats_test_result, 
   "Normalized Accessibility of Neurogenic Genes") 
 
-filename = 
-  "figures/fig4/fig4b_normcountsplot_neurogenic_032625.pdf"
-pdf(filename, width = 5, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_neuro), width = 5, height = 5)
 print(neurogenic_plot) 
 
 dev.off()
+
+print(paste0("Saved ", filename_neuro))
 
 
 # GLIOGENIC NORM ACCESSIBILITY: ------------------------------------------------
@@ -342,14 +269,13 @@ gliogenic_plot <- norm_accessibility_plot_function(
   stats_test_result, 
   "Normalized Accessibility of Gliogenic Genes") 
 
-# change filename
-filename = 
-  "figures/fig4/fig4c_normcountsplot_gliogenic_032625.pdf" 
-pdf(filename, width = 5, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_glia), width = 5, height = 5)
 print(gliogenic_plot)
 
 dev.off()
 
+print(paste0("Saved ", filename_glia))
 
 # OL LINEAGE NORM ACCESSIBILITY: ---------------------------------------------------------------------------------------
 norm_counts <- normalized_counts_function(merged_df, ol_all)
@@ -363,12 +289,13 @@ ol_plot <- norm_accessibility_plot_function(
   stats_test_result, 
   "Normalized Accessibility of OL Lineage Genes")
 
-filename = 
-  "figures/fig4/fig4d_normcountsplot_ol_032625.pdf"
-pdf(filename, width = 5, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_ol), width = 5, height = 5)
 print(opc_plot)
 
 dev.off()
+
+print(paste0("Saved ", filename_ol))
 
 
 # SHH PATHWAY NORM ACCESSIBILITY: ----------------------------------------------
@@ -382,15 +309,18 @@ shh_plot <- norm_accessibility_plot_function(
   stats_test_result, 
   "Normalized Accessibility of SHH Pathway Genes")
 
-filename = 
-  "figures/fig4/fig4g_normcountsplot_shh_032625.pdf"
-pdf(filename, width = 5, height = 5)
+# SAVE
+pdf(file.path(output_dir_figures, filename_shh), width = 5, height = 5)
 print(shh_plot)
 
 dev.off()
 
+print(paste0("Saved ", filename_shh))
 
 # ------------------------------------------------------------------------------
 print(
-  "Normalized accessibility plots were generated and saved in figures/fig4"
+  paste0(
+    "Normalized accessibility plots were generated and saved in ",
+    output_dir_figures
   )
+)
