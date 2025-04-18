@@ -1,21 +1,4 @@
-# Run after running scripts in 'preprocess/atacseq_e16_compute_matrix/'
-# and put the matrix files in 'processed_data/atacseq_e16/deeptools_output'
-
-# SET UP
-library(data.table)
-library(ggplot2)
-library(reshape2)
-library(tidyverse)
-library(readr)
-library(dplyr)
-
-# READ IN MATRIX FILES: -----------------------------------------------------------------------------------
-# Unzip gz files
-# Skip the JSON metadata line
-ctrl_matrix <- fread("zcat < data/processed_data/atacseq_e16/deeptools_output/computematrix/CTRL.matrix.gz", skip = 1)
-nicd_matrix <- fread("zcat < data/processed_data/atacseq_e16/deeptools_output/computematrix/NICD.matrix.gz", skip = 1) 
-
-# PREPARE DATA: -----------------------------------------------------------------------------------
+# PREPARE DATA: ----------------------------------------------------------------
 # Extract the numeric data for plotting starting at column 7
 ctrl_data <- ctrl_matrix[, 7:ncol(ctrl_matrix), with = FALSE]
 nicd_data <- nicd_matrix[, 7:ncol(nicd_matrix), with = FALSE]
@@ -32,9 +15,13 @@ plot_data <- data.frame(
 )
 
 # Melt the dataframe for ggplot2
-plot_data_melt <- melt(plot_data, id.vars = "Position", variable.name = "Condition", value.name = "Score")
+plot_data_melt <- melt(plot_data, 
+                       id.vars = "Position", 
+                       variable.name = "Condition", 
+                       value.name = "Score"
+                       )
 
-# PLOT TSS ENRICHMENT: -----------------------------------------------------------------------------------
+# PLOT TSS ENRICHMENT: ---------------------------------------------------------
 # Plot using ggplot2 and save as png
 
 tss_enrichment_plot <- ggplot(plot_data_melt, aes(x = Position, 
@@ -46,14 +33,14 @@ tss_enrichment_plot <- ggplot(plot_data_melt, aes(x = Position,
        x = "Position relative to TSS",
        y = "Enrichment Score") +
   theme_classic() +
-  scale_color_manual(values = c("#AFA2C2", "#833D66")) +  
+  scale_color_manual(values = c(control_color, mutant_color)) +  
   theme(legend.position = "none")
 
 
-filename = "figures/fig3/fig3c_tssenrichmentplot.pdf"
-pdf(filename, width = 3, height = 3)
+# SAVE PLOT: -------------------------------------------------------------------
+pdf(file.path(output_dir_figures, filename_tssenrichment), width = 3, height = 3)
 print(tss_enrichment_plot)
 
 dev.off()
 
-print("TSS enrichment plot saved in figures/fig3/")
+print(paste0(filename_tssenrichment, " saved in ", output_dir_figures))
