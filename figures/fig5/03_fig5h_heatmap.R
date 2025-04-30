@@ -57,15 +57,22 @@ rownames(mat) <- sig_symbols[sig_symbols %in% Shh_gene_list]
 # Center the data
 mat <- mat - rowMeans(mat)
 
+# Make Heatmap in specific order ***********************************************
+# Only include genes present in the matrix
+ordered_genes <- desired_order[desired_order %in% rownames(mat)]
+
+# Subset the matrix to include only the ordered genes
+mat_ordered <- mat[match(ordered_genes, rownames(mat)), ]
+
 
 # PLOT HEATMAP: ----------------------------------------------------------------
 heatmap_sig_shh <- pheatmap(
-  mat,
-  cluster_rows = TRUE, 
+  mat_ordered,
+  cluster_rows = FALSE, 
   cluster_cols = TRUE, 
   show_rownames = TRUE, 
   annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
-  color = colorRampPalette(c(control_color, "white", mutant_color))(50)) 
+  color = colorRampPalette(c(downreg_color, "white", upreg_color))(50)) 
 
 # SAVE
 pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 6)
