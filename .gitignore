@@ -56,3 +56,5 @@ tables/~$table_S_rbpjmotif_neuron.xlsx
 *.csv
 .RDataTmp3
 figures/figS3/.Rapp.history
+figures/figS3/figS3c_heatmap_shh-notch-glia-neuro_v2.pdf
+figures/figS3/figS3c_heatmap_shhnotchglia.pdf
