@@ -42,8 +42,18 @@ alpha <- 0.05
 
 
 # HEATMAP; DEFINE GENE LISTS AND ORDER: ----------------------------------------
-heatmap_genes_list <- c("Notch1", "Notch2", "Hes1", "Hes5", "Hey1", "Hes6",
-                "Dll1", "Dll3", "Jag1", "Jag2")
+neuron_genes <- c("Neurog2", "Neurog1", "Tbr1", "Neurod2", "Neurod4", "Neurod6")
+
+notch_genes <- c("Notch1", "Notch2", "Jag1", "Jag2", "Hes1", "Hey1", "Hes6", "Dll3", "Dll1")
+
+shh_genes <- c("Gli1", "Ptch1", "Ptch2", "Hhip", "Gli3", "Iqce", "Evc", "Evc2")
+
+glia_genes <- c("Gfap", "Ascl1", "Sox10", "Olig2", "Sox8", "Olig1", "Egfr", "Cspg4")
+
+heatmap_genes_list <- c(notch_genes, shh_genes, glia_genes, neuron_genes)
+
+# define order of genes on heatmap
+desired_order <- c(notch_genes, shh_genes, glia_genes, neuron_genes)
 
 print("Config file for figS3 ran successfully.")
 

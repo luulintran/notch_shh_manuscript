@@ -75,3 +75,30 @@ print(heatmap_sig_geneslist)
 dev.off()
 
 print(paste0(filename_heatmap, " saved in ", output_dir_figures))
+
+# ORDERED GENES HEATMAP: -------------------------------------------------------
+# Only include genes present in the matrix
+ordered_genes <- desired_order[desired_order %in% rownames(mat)]
+
+# Subset the matrix to include only the ordered genes
+mat_ordered <- mat[match(ordered_genes, rownames(mat)), ]
+
+# MAKE HEATMAP WITH ORDERED GENES: ---------------------------------------------
+ordered_heatmap <- pheatmap(
+  mat_ordered,
+  # Set to FALSE to use specified order
+  cluster_rows = FALSE,  
+  cluster_cols = TRUE, 
+  # Show gene symbols
+  show_rownames = TRUE,  
+  annotation_col = as.data.frame(
+    colData(vsd)[, "condition", drop=FALSE]),
+  color = piyg_colors)
+
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 8)
+print(ordered_heatmap)
+
+dev.off()
+
+print(paste0(filename_heatmap, " saved in ", output_dir_figures))
