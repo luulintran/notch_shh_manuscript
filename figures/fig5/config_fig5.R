@@ -13,7 +13,7 @@ csv_deseq2_results <- "tables/table_S7_rnaseq_e17_deseq2_results.csv"
 output_dir_figures <-  "figures/fig5"
 
 # output figure names
-filename_upregulatedgo <- "fig5f_upregulatedgo_barplot.pdf"
+filename_upregulatedgo <- "fig5f_upregulatedgo_barplot_smo.pdf"
 filename_downregulatedgo <- "fig5g_downregulatedgo_barplot.pdf"
 filename_heatmap <- "fig5h_heatmap.pdf"
 
@@ -24,11 +24,15 @@ control_color = "#ca8bc9"
 # (upregulated)
 mutant_color = "#f48c67"
 
+# Heatmap colors
+downreg_color <- "#ca8bc9"
+upreg_color <- "#FF6B35"
+
 # GO TERMS PLOTS: --------------------------------------------------------------
 # Define the GO terms of interest
-GO_up_specific_terms <- c('gliogenesis', 
+GO_up_specific_terms <- c('smoothened signaling pathway',
+                    'gliogenesis', 
                     'glial cell differentiation', 
-                    'myelination', 
                     'glial cell development', 
                     'oligodendrocyte development')
 
@@ -45,6 +49,9 @@ Shh_gene_list <- c("Smo", "Boc", "Cdon",
                    "Gas1", "Gli1", "Gli2", "Gli3", 
                    "Sufu", "Disp1", "Iqce", "Efcab7", 
                    "Ptch1", "Ptch2", "Hhip", "Sufu", 
-                   "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7")
+                   "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7", "Evc", "Evc2")
+
+desired_order <- c("Evc2", "Kif7", "Gas1", "Boc", "Smo", 
+                   "Iqce", "Evc", "Gli1", "Ptch1", "Ptch2", "Hhip")
 
 print("Config file for fig5 ran successfully.")
