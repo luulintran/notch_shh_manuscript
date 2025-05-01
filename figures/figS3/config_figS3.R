@@ -33,9 +33,9 @@ piyg_colors <- colorRampPalette(rev(brewer.pal(11, "PiYG")))(100)
 # VOLCANO PLOT; DEFINE GENE LIST AND THRESHOLD: --------------------------------
 # Make a list of selected genes. Here, I want to show Notch genes, 
 # a few neurogenic genes, and a few progenitor and gliogenic genes.
-specific_genes <- c('Dll3', 'Dll1', 'Neurod4', 'Hey1', 
-                    'Neurog2', 'Hey1', 'Hes5', 'Notch1', 
-                    'Sox2', 'Sox9', 'Notch2')
+specific_genes <- c("Notch1", "Notch2", "Jag1", "Jag2", "Hes1", 
+					"Hey1", "Hes6", "Dll3", "Dll1", "Sox2", "Pax6", 
+					"Olig2", "Nes", "Neurog2")
 
 # define significance threshold (padj 0.05)
 alpha <- 0.05
