@@ -75,10 +75,10 @@ NICD_enriched <- peak_list %>%
 # READ IN HOMER MOTIF INSTANCE FILES FROM HOMER findMotifsGenome.pl: -----------
 
 RBPJ_CTRL <- read.csv(
-  "data/processed_data/atacseq_e16/homer_output/RBPJ_CTRL_findMotifs_inst.txt",  
+  "data/processed_data/atacseq_e16/homer_output/RBPJ_kr_CTRL_findMotifs_inst.txt",  
   sep ="\t")
 RBPJ_NICD <- read.csv(
-  "data/processed_data/atacseq_e16/homer_output/RBPJ_NICD_findMotifs_inst.txt",  
+  "data/processed_data/atacseq_e16/homer_output/RBPJ_kr_NICD_findMotifs_inst.txt",  
   sep ="\t")
 
 # CLEAN UP DATAFRAMES: --------------------------------------------------------

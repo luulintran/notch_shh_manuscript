@@ -1,6 +1,6 @@
 # READ DDS OBJECT FROM RDS FILE: -----------------------------------------------
 dds <- readRDS(
-  file = rds_deseq2_results_e17)
+  file = rds_deseq2_results)
 
 # EXTRACT TRANSFORMED VALUES: --------------------------------------------------
 vsd <- vst(dds, blind=FALSE)
@@ -18,10 +18,11 @@ pcaplot <- ggplot(pcaData, aes(x = PC1, y = PC2, color = condition)) +
   labs(title = "PCA",
        x = paste0("PC1[", percentVar[1], "%]"),
        y = paste0("PC2[", percentVar[2], "%]")) +
-  scale_color_manual(values = c("control" = control_color, "NICD" = mutant_color)) +
+  scale_color_manual(values = c("e13" = control_color, 
+                                "e17" = mutant_color)) + 
   theme_classic(base_family = "Arial", base_size = 12) +
   theme(
-    axis.line = element_blank(),  
+    axis.line = element_blank(),
     panel.border = element_rect(color = "black", fill = NA, linewidth = 1),  
     legend.position = "none",
     plot.title = element_text(hjust = 0.5, size = 16)

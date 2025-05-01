@@ -27,7 +27,7 @@ For our manuscript, we generated data using RNA-seq and ATAC-seq. To preprocess 
 ## Setup
 The majority of this project was done using R (v 4.3.2) and some shell scripting. 
 
-Before running any analysis or generating figures, you need to set up the environment using the `setup/` scripts. This will ensure all dependencies are installed.
+Before running any analysis or generating figures, you need to set up the R environment using the `setup/` scripts. This will ensure all dependencies are installed, directories are created, and libraries are loaded.
 
 ### To run the setup:
 
@@ -56,20 +56,20 @@ Note: After running the preprocessing steps and filtering ATAC-seq fragments, mo
 
 ## Analysis
 
-The `analysis/` directory contains scripts for performing downstream analysis using DESeq2 or Diffbind depending on the specific figure you plan to generate. You need to run the analysis scripts before generating any figures or tables, as the results from these analyses will be used in both.
+The `analysis/` directory contains scripts for performing downstream analysis using DESeq2 or Diffbind depending on the specific figure you plan to generate. You need to run the analysis scripts before generating any figures or tables, as the results from these analyses will be used in both. In general, I would recommend running the analysis scripts first, then the table scripts, then the figure scripts including the config scripts for each figure.
 
-If you are interested in regenerating all the figures and tables in the manuscript, run each script in the order they are numbered. If you are only interested in regenerating the figures and tables related to one assay (such as RNA-seq), you only need to run the corresponding `analysis/` script.
+If you are interested in regenerating all the figures and tables in the manuscript, run the corresponding config.R script and then each script in the order they are numbered. If you are only interested in regenerating the figures and tables related to one assay (such as RNA-seq), you only need to run the corresponding `analysis/` script and config.R script.
 
 ### HOMER motif enrichment analysis
-Included in the `analysis/` directory are shell scripts for performing motif enrichment analysis with HOMER (v 4.9) (http://homer.ucsd.edu/homer/). These are separate from the rest of the workflow, but the .txt files resulting from HOMER `findmotifsGenome.pl` to locate motif instances are needed to run `tables/tableS4-5.R`.  To run findmotifsGenome.pl to search for motif instances, you need motif files for the transcription factor you are interested in. You can read more about this on HOMER's website. 
+Included in the `analysis/` directory are shell scripts for performing motif enrichment analysis with HOMER (v 4.9) (http://homer.ucsd.edu/homer/). These are separate from the rest of the workflow, but the .txt files resulting from HOMER `findmotifsGenome.pl` to locate motif instances are needed to run `tables/tableS4-5.R`.  To run findmotifsGenome.pl to search for motif instances, you need motif files (Position Weight Matrices) for the transcription factor you are interested in. You can read more about this on HOMER's website. 
 
-Some of the results of the motif enrichment analysis can be found in Figure 4. The rest of the results are not included in this repo or in the manuscript, but can be reproduced using the BED files generated from `analysis/04_make_bedfiles.R` and the HOMER script `analysis/homer_motif_enrichment/run_homer_motifs.sh`, which will need a genome file.
+Some of the results of the motif enrichment analysis can be found in Figure 4. The rest of the results are not included in this repo or in the manuscript, but can be reproduced using the BED files generated from `analysis/02-2_make_bedfiles.R` and the HOMER script `analysis/homer_motif_enrichment/run_homer_motifs.sh`, which will need a genome file.
 
 ## Figures
 
 The `figures/` directory contains scripts for generating the figure panels included in the manuscript. Some figure panels depend on tables being generated first. This requirement should be noted at the top of the script. Be sure to follow the necessary steps in the Tables section before running certain figure scripts.
 
-The name of scripts will correspond to the figure panel. Each figure directory (such as `fig2/`) will have numbered scripts starting with '01_....R'. Run these scripts in order to regenerate plots for the entire figure. 
+Each figure directory (like `fig1/`) has a corresponding config.R script (ex. `config_fig1.R`). This config script is meant to be modified so you can change the input file paths, output directories, plot colors, gene lists and so on. Always run the config script first, after you've modified it. The name of the other scripts will correspond to the figure panel. Each figure directory (such as `fig2/`) will have numbered scripts starting with '01_....R'. You can either run them all in the order in which they are numbered, or if you ran the config.R script, then you are able to run any of them individually.
 
 Note: To regenerate the TSS enrichment plot in Figure 3 (`04_fig3c_tssenrichmentplot.R`), you will need to generate matrix files. Shell scripts that were used to make matrix files can be found in `preprocess/compute_matrix` and are numbered in the order that they should be run. Briefly, these will merge the bam files for each condition (to get average across replicates), index them, make bigwig files, call peaks, and make bed files. The bigwig and bed files are input for deeptools `computeMatrix` command.
 
@@ -84,4 +84,4 @@ Note: The csv files resulting from `tables/scripts/TableS4-5.R` were combined to
 ## Notes
 Ensure you have the appropriate data files in `data/raw_data/` and `data/processed_data/`.
 
-The scripts in `analysis/`, `figures/`, and `tables/` depend on the output from previous steps, so follow the order of operations carefully and look at the comments at the top of the scripts or notes in the README.
+The scripts in `analysis/`, `tables/`, and `figures/` depend on the output from previous steps, so follow the order of operations carefully and look at the comments at the top of the scripts or notes in the README. In general, after running `set_up_environment.R`, I would recommend running the `analysis/` scripts, then the `tables/` scripts, then the `figures/` scripts. For each `fig_/` run the config.R script and then each script after that to general each panel.

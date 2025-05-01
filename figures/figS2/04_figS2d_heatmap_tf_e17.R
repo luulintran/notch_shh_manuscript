@@ -1,8 +1,9 @@
-# READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: ---------------------
-dds <- readRDS(rds_deseq2_results)
+# READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: --------------------
+dds <- readRDS(rds_deseq2_results_e17)
+# Store results in res
 res <- results(dds)
 
-# ANNOTATE RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: ---------------------------
+# ANNOTATE DESEQ2 RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: --------------------
 ensembl_ids <- rownames(res)
 
 # annotate with gene symobols using org.Mm.eg.db package
@@ -25,7 +26,8 @@ resOrdered <- res[order(res$padj),]
 resOrdered <- resOrdered[, c("symbol", 
                              "entrez", 
                              setdiff(colnames(resOrdered), 
-                                     c("symbol", "entrez")))]
+                                     c("symbol", "entrez")))
+]
 
 # PREPARE DATA FOR HEATMAP SHOWING SPECIFIC GENE SET: --------------------------
 
@@ -42,8 +44,8 @@ sig_symbols <- mapIds(org.Mm.eg.db,
                       keytype = "ENSEMBL",
                       multiVals = "first")
 
-# Filter sig_genes list for genes in Shh_gene_list by symbol
-selected_genes <- sig_genes[sig_symbols %in% Shh_gene_list]
+# Filter sig_genes list for genes in combined_gene list by symbol
+selected_genes <- sig_genes[sig_symbols %in% TFs]
 
 # EXTRACT TRANSFORMED VALUES: **************************************************
 vsd <- vst(dds, blind=FALSE)
@@ -52,32 +54,30 @@ vsd <- vst(dds, blind=FALSE)
 mat <- assay(vsd)[selected_genes, ]
 
 # Update row names with gene symbols for the selected genes
-rownames(mat) <- sig_symbols[sig_symbols %in% Shh_gene_list]
+rownames(mat) <- sig_symbols[sig_symbols %in% TFs]
 
 # Center the data
 mat <- mat - rowMeans(mat)
 
-# Make Heatmap in specific order ***********************************************
-# Only include genes present in the matrix
+# Ensure the order vector only includes genes present in the matrix
 ordered_genes <- desired_order[desired_order %in% rownames(mat)]
 
 # Subset the matrix to include only the ordered genes
 mat_ordered <- mat[match(ordered_genes, rownames(mat)), ]
 
-
-# PLOT HEATMAP: ----------------------------------------------------------------
-heatmap_sig_shh <- pheatmap(
+# Make heatmap with ordered genes
+tf_heatmap <- pheatmap(
   mat_ordered,
   cluster_rows = FALSE, 
   cluster_cols = TRUE, 
   show_rownames = TRUE, 
   annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
-  color = colorRampPalette(c(downreg_color, "white", upreg_color))(50)) 
+  color = colorRampPalette(c(downreg_color, "white", upreg_color))(50))
 
 # SAVE
-pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 6)
-print(heatmap_sig_shh)
+pdf(file.path(output_dir_figures, filename_heatmap_e17), width = 4, height = 5)
+print(tf_heatmap)
 
 dev.off()
 
-print(paste0(filename_heatmap, " saved in ", output_dir_figures))
+print(paste0(filename_heatmap_e17, " saved in ", output_dir_figures))

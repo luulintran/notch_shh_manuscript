@@ -20,6 +20,9 @@ figures/figS2/*.pdf
 # Ignore already made tables
 tables/*.csv
 
+# Ignore old script
+figures/figS2/03_figS2c_upregulatedgo.R
+
 # Ignore R temporary files
 figures/fig2/.Rapp.history
 figures/fig3/.Rapp.history
@@ -47,3 +50,11 @@ tables/table_S_rbpjmotif_neuron.xlsx
 tables/table_S_rbpjmotif_shh.xlsx
 analysis/04_make_bedfiles.R
 analysis/04_make_bedfiles.R
+tables/~$table_S_rbpjmotif_neuron.xlsx
+.RDataTmp2
+*.xlsx
+*.csv
+.RDataTmp3
+figures/figS3/.Rapp.history
+figures/figS3/figS3c_heatmap_shh-notch-glia-neuro_v2.pdf
+figures/figS3/figS3c_heatmap_shhnotchglia.pdf

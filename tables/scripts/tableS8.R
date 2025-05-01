@@ -1,16 +1,15 @@
-# RUN DESEQ2 ANALYSIS SCRIPT: --------------------------------------------------
-# Run 'analysis/01_deseq2_e16.R' if you have not already
-# source("analysis/01_deseq2_e16.R")
+# Run 'analysis/04_deseq2_e13-vs-e17.R' if you haven't already
+#source("analysis/04_deseq2_e13-vs-e17.R")
 
 # DEFINE FILES AND PATHS: ------------------------------------------------------
 # input deseq2 results rds file
-rds_deseq2_results <- "data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds"
+rds_deseq2_results <- "data/processed_data/rnaseq_ctrl_e13/r_objects/deseq2_dds_e13-vs-e17.rds"
 
-# output directory for supplementary tables
+# output directory
 output_dir_tables <- "tables"
 
-# output filename for table
-filename <- "table_S1_rnaseq_e16_deseq2_results.csv"
+# output filename
+filename <- "table_S8_rnaseq_e13-vs-e17_deseq2_results.csv"
 
 # LOAD DESEQ2 DDS OBJECT FROM RDS FILE: ----------------------------------------
 dds <- readRDS(rds_deseq2_results)
@@ -37,14 +36,12 @@ res$entrez <- mapIds(org.Mm.eg.db,
 # Re-order res based on padj
 resOrdered <- res[order(res$padj),]
 
+
 # Move symbol and entrez columns to the front
 resOrdered <- resOrdered[, c("symbol", 
                              "entrez", 
                              setdiff(colnames(resOrdered), 
-                                     c("symbol", "entrez")
-                                     )
-                             )
-                         ]
+                                     c("symbol", "entrez")))]
 
 # Rename resOrdered to a simpler name as dataframe
 out <- as.data.frame(resOrdered)
@@ -58,4 +55,3 @@ write.csv(out,
 
 print(paste0(filename, " was generated and saved in ", output_dir_tables))
 
-      

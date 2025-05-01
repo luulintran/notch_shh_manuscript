@@ -1,14 +1,5 @@
-# Run after running 'analysis/03_deseq2_e17.R' and 'tables/scripts/tableS6.R'
-
-# SET UP
-library(org.Mm.eg.db)
-library(clusterProfiler)
-library(DESeq2)
-library(dplyr)
-library(ggplot2)
-
 # READ DESEQ2 RESULTS CSV FILE: ----------------------------------------
-dds <- readRDS("data/processed_data/rnaseq_e17/r_objects/deseq2_dds_e17.rds")
+dds <- readRDS(rds_deseq2_results_e17)
 
 # STORE DESEQ2 RESULTS: --------------------------------------------------------
 res <- results(dds)
@@ -62,23 +53,23 @@ GO_results_up <- enrichGO(gene = up_genes,
 # Save GO results for upregulated genes as a dataframe
 GO_up_genes_df <- as.data.frame(GO_results_up)
 
-# PLOT GO RESULTS FOR GLIOGENIC TERMS: -----------------------------------------
+# PLOT GO RESULTS FOR SELECTED GO TERMS: ---------------------------------------
 
-GO_up_smo_cilia <- c('smoothened signaling pathway', 
+GO_up_specific_terms <- c('smoothened signaling pathway', 
                      'cilium assembly', 'cilium organization')
 
 # Filter the dataframe for the relevant GO terms
-GO_up_genes_df_smo_cilia <- GO_up_genes_df %>% 
-  dplyr::filter(Description %in% GO_up_smo_cilia)
+GO_up_genes_df_specific_terms <- GO_up_genes_df %>% 
+  dplyr::filter(Description %in% GO_up_specific_terms)
 
 # Calculate -log10(p.adjust) values
-GO_up_genes_df_smo_cilia$log_p.adjust <- -log10(GO_up_genes_df_smo_cilia$p.adjust)
+GO_up_genes_df_specific_terms$log_p.adjust <- -log10(GO_up_genes_df_specific_terms$p.adjust)
 
 # Create horizontal  bar plot 
-GO_smo_cilia_barplot <- ggplot(GO_up_genes_df_smo_cilia, 
+GO_up_barplot <- ggplot(GO_up_genes_df_specific_terms, 
                                aes(x = reorder(Description, log_p.adjust), 
                                    y = log_p.adjust)) + 
-  geom_bar(stat = "identity", fill = "#f48c67") + 
+  geom_bar(stat = "identity", fill = upreg_go_color) + 
   coord_flip() +  
   labs(title = "Upregulated GO Terms", 
        x = "GO Term", 
@@ -88,10 +79,9 @@ GO_smo_cilia_barplot <- ggplot(GO_up_genes_df_smo_cilia,
 
 
 # SAVE PLOT: -------------------------------------------------------------------
-filename = "figures/figS2/figS2c_upregulatedgo_barplot.pdf"
-pdf(filename, width = 5, height = 3)
-print(GO_smo_cilia_barplot)
+pdf(file.path(output_dir_figures, filename_upregulatedgo), width = 5, height = 3)
+print(GO_up_barplot)
 
 dev.off()
 
-print("GO bar plot generated and saved in figures/figS2")
+print(paste0(filename_upregulatedgo, " generated and saved in ", output_dir_figures))

@@ -15,12 +15,12 @@ module load modules modules-init
 module load homer
 
 # Define motif name
-MOTIF_NAME="RBPJ" # Change this as needed. This adds the motif name to the output file name.
+MOTIF_NAME="RBPJ_kr" # Change this as needed. This adds the motif name to the output file name.
 
 # Define paths to BED files, motif file, and genome FASTA file
 BED1="diffbind_bed_files/CTRL_e16_enriched.bed"
 BED2="diffbind_bed_files/NICD_e16_enriched.bed"
-MOTIF="../motif_files/RBPJ.motif" # Motif file corresponding to $MOTIF_NAME. Change as needed. motif files in motif_files
+MOTIF="../motif_files/RBPJ_knownresults.motif" # Motif file corresponding to $MOTIF_NAME. Change as needed. motif files in motif_files
 GENOME="../genome_file/mm10.fa"
 
 # Define output directory

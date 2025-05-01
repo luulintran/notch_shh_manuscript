@@ -48,7 +48,7 @@ volcano_plot <- ggplot(res_df, aes(x = log2FoldChange, y = -log10(padj))) +
   scale_color_manual(values = c(downreg_color, upreg_color, "grey")) + 
   theme_minimal(base_family = "Arial", base_size = 8) + 
   labs(
-    title = "NICD vs CTRL E17.5",
+    title = "WT E13.5 vs E17.5",
     x = "log2 Fold Change",
     y = "-log10 Adjusted P-value"
   ) + 
