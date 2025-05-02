@@ -1,18 +1,8 @@
-# Run after running 'analysis/01_deseq2_e16.R' 
-
-library(pheatmap)
-library(DESeq2)
-library(org.Mm.eg.db)
-library(tidyverse)
-library(readr)
-library(dplyr)
-
-# READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: --------------------
-dds <- readRDS("data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds")
-# Store results in res
+# READ DDS OBJECT FOLLOWING DESEQ2 ANALYSIS FROM RDS FILE: ---------------------
+dds <- readRDS(rds_deseq2_results)
 res <- results(dds)
 
-# ANNOTATE DESEQ2 RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: --------------------
+# ANNOTATE RESULTS WITH GENE SYMBOLS AND ENTREZ IDS: ---------------------------
 ensembl_ids <- rownames(res)
 
 # annotate with gene symobols using org.Mm.eg.db package
@@ -35,16 +25,7 @@ resOrdered <- res[order(res$padj),]
 resOrdered <- resOrdered[, c("symbol", 
                              "entrez", 
                              setdiff(colnames(resOrdered), 
-                                     c("symbol", "entrez")))
-]
-
-# MAKE LIST OF TRANSCRIPTION FACTORS: ------------------------------------------
-# These TFs have motifs enriched in sites with decreased or 
-# increased accessibility
-
-# Heatmap with specific genes of TFs from atac-seq motif enrichment 
-TFs <- c('Lhx1','Lhx2', 'Nfix', 'Nfia', 'Nfic', 'Sox2', 'Sox8', 'Sox9','Sox10', 
-         'Neurog1', 'Neurog2', 'Neurod2', 'Mef2c', 'Mef2d', 'Eomes', 'Tbr1')
+                                     c("symbol", "entrez")))]
 
 # PREPARE DATA FOR HEATMAP SHOWING SPECIFIC GENE SET: --------------------------
 
@@ -61,8 +42,8 @@ sig_symbols <- mapIds(org.Mm.eg.db,
                       keytype = "ENSEMBL",
                       multiVals = "first")
 
-# Filter sig_genes list for genes in combined_gene list by symbol
-selected_genes <- sig_genes[sig_symbols %in% TFs]
+# Filter sig_genes list for genes in Shh_gene_list by symbol
+selected_genes <- sig_genes[sig_symbols %in% heatmap_genes_list]
 
 # EXTRACT TRANSFORMED VALUES: **************************************************
 vsd <- vst(dds, blind=FALSE)
@@ -71,36 +52,53 @@ vsd <- vst(dds, blind=FALSE)
 mat <- assay(vsd)[selected_genes, ]
 
 # Update row names with gene symbols for the selected genes
-rownames(mat) <- sig_symbols[sig_symbols %in% TFs]
+rownames(mat) <- sig_symbols[sig_symbols %in% heatmap_genes_list]
 
 # Center the data
 mat <- mat - rowMeans(mat)
 
 
-# ******************************************************************************
-desired_order <- c('Lhx1','Lhx2', 'Nfix', 'Nfia', 'Nfic', 'Sox2', 'Sox8', 
-                   'Sox9','Sox10', 'Neurog1', 'Neurog2', 'Neurod2', 'Mef2c', 
-                   'Mef2d', 'Eomes', 'Tbr1') 
+# PLOT HEATMAP: ----------------------------------------------------------------
+heatmap_sig_geneslist <- pheatmap(
+  mat,
+  cluster_rows = TRUE, 
+  cluster_cols = TRUE, 
+  show_rownames = TRUE, 
+  annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
+  color = piyg_colors
+)
 
-# Ensure the order vector only includes genes present in the matrix
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 6)
+print(heatmap_sig_geneslist)
+
+dev.off()
+
+print(paste0(filename_heatmap, " saved in ", output_dir_figures))
+
+# ORDERED GENES HEATMAP: -------------------------------------------------------
+# Only include genes present in the matrix
 ordered_genes <- desired_order[desired_order %in% rownames(mat)]
 
 # Subset the matrix to include only the ordered genes
 mat_ordered <- mat[match(ordered_genes, rownames(mat)), ]
 
-# Make heatmap with ordered genes
-tf_heatmap <- pheatmap(
+# MAKE HEATMAP WITH ORDERED GENES: ---------------------------------------------
+ordered_heatmap <- pheatmap(
   mat_ordered,
-  cluster_rows = FALSE, 
+  # Set to FALSE to use specified order
+  cluster_rows = FALSE,  
   cluster_cols = TRUE, 
-  show_rownames = TRUE, 
-  annotation_col = as.data.frame(colData(vsd)[, "condition", drop=FALSE]),
-  color = colorRampPalette(c("#CDA2CC", "white", "#FF6B35"))(50))
+  # Show gene symbols
+  show_rownames = TRUE,  
+  annotation_col = as.data.frame(
+    colData(vsd)[, "condition", drop=FALSE]),
+  color = piyg_colors)
 
-filename = "figures/figS2/figS2d_heatmap_tf_e16.pdf"
-pdf(filename, width = 4, height = 5)
-print(tf_heatmap)
+# SAVE
+pdf(file.path(output_dir_figures, filename_heatmap), width = 5, height = 8)
+print(ordered_heatmap)
 
 dev.off()
 
-print("heatmap saved in figures/figS2")
+print(paste0(filename_heatmap, " saved in ", output_dir_figures))

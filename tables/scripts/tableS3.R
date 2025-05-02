@@ -1,18 +1,16 @@
+# Run 'analysis/02_diffbind_e16.R' if you haven't already
+# source("analysis/02_diffbind_e16.R")
 
-# Run after running 'analysis/02_diffbind_e16.R'
+# DEFINE FILES AND OUTPUT DIRS: ------------------------------------------------
+rds_dbObj <- "data/processed_data/atacseq_e16/r_objects/diffbind_dbObj.rds"
 
-# SET UP
-library(DiffBind)
-library(ChIPseeker)
-library(org.Mm.eg.db)
-library(TxDb.Mmusculus.UCSC.mm10.knownGene)
-library(tidyverse)
-library(dplyr)
-library(readr)
+output_dir_tables <- "tables"
+
+filename <- "table_S3_atacseq_e16_diffbind_results.csv"
 
 # LOAD RDS FILE OF DIFFBIND DBA OBJECT: ----------------------------------------
 dbObj <- readRDS(
-  file = "data/processed_data/atacseq_e16/r_objects/diffbind_dbObj.rds")
+  file = rds_dbObj)
 
 # Create dba report with results including stats
 dbObj.DB <- dba.report(dbObj)
@@ -67,8 +65,8 @@ merged_df <- merged_df[order(merged_df$FDR), ]
 # Write annotated diffbind results to file which can be opened in excel
 write.csv(
   merged_df, 
-  file="tables/table_S3_atacseq_e16_diffbind_results.csv", 
+  file=file.path(output_dir_tables, filename), 
   row.names=F)
 
-print("Table_S3 generated and saved in tables/")
+print(paste0(filename, " generated and saved in ", output_dir_tables))
 

@@ -1,14 +1,23 @@
-# Run this after running 'analysis/01_deseq2_e16.R'
+# Run 'analysis/01_deseq2_e16.R' if you haven't already
+#source("analysis/01_deseq2_e16.R")
 
-# SET UP
-library(DESeq2)
-library(org.Mm.eg.db)
-library(tidyverse)
-library(readr)
-library(dplyr)
+# DEFINE FILES AND PATHS: ------------------------------------------------------
+# input deseq2 results rds file
+rds_deseq2_results <- "data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds"
+
+# output directory for supplementary tables
+output_dir_tables <- "tables"
+
+# output filename for table
+filename <- "table_S2_e16_shh_genes.csv"
+
+# MAKE LIST OF GENES RELATED TO SHH PATHWAY: -----------------------------------
+Shh_genes <- c("Smo", "Boc", "Cdon", "Gas1", "Gli1", "Gli2", "Gli3", "Sufu", 
+               "Disp1", "Iqce", "Efcab7", "Ptch1", "Ptch2", "Hhip", "Sufu", 
+               "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7")
 
 # LOAD DESEQ2 DDS OBJECT FROM RDS FILE: ----------------------------------------
-dds <- readRDS("data/processed_data/rnaseq_e16/r_objects/deseq2_dds_e16.rds")
+dds <- readRDS(rds_deseq2_results)
 
 # STORE DESEQ2 RESULTS: --------------------------------------------------------
 res <- results(dds)
@@ -41,11 +50,6 @@ resOrdered <- resOrdered[, c("symbol",
 # Save as dataframe
 out <- as.data.frame(resOrdered)
 
-# MAKE LIST OF GENES RELATED TO SHH PATHWAY: -----------------------------------
-Shh_genes <- c("Smo", "Boc", "Cdon", "Gas1", "Gli1", "Gli2", "Gli3", "Sufu", 
-               "Disp1", "Iqce", "Efcab7", "Ptch1", "Ptch2", "Hhip", "Sufu", 
-               "Gsk3b", "Ck1", "Pcaf", "Cul3", "Kif7")
-
 # FILTER DESEQ2 RESULTS FOR SHH GENES: -----------------------------------------
 
 shh_deseq2_results <- out %>%
@@ -58,6 +62,7 @@ shh_deseq2_results <- rownames_to_column(shh_deseq2_results, var = "ensembl")
 # SAVE TO FILE: ----------------------------------------------------------------
 write.csv(
   shh_deseq2_results, 
-  "tables/table_S2_e16_shh_genes.csv", 
+  file = file.path(output_dir_tables, filename), 
   row.names = F)
 
+print(paste0(filename, " was generated and saved in ", output_dir_tables))

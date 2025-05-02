@@ -1,15 +1,15 @@
 # DEFINE FILES AND PATHS: ------------------------------------------------------
 # Path to the gene raw counts matrix
-input_cts <- "data/processed_data/rnaseq_e17/raw_counts/rnaseq_e17_raw_counts.tsv"
+input_cts <- "data/processed_data/rnaseq_ctrl_e13/raw_counts/ctrl_e13_e17_counts.tsv"
 
 # Path to the sample sheet file
-input_coldata <- "data/meta_data/rnaseq_e17/coldata.csv"
+input_coldata <- "data/meta_data/rnaseq_ctrl_e13-vs-e17/SampleSheet_e13_e17.csv"
 
 # Path to output directory for r_objects
-output_dir_robj <- "data/processed_data/rnaseq_e17/r_objects"
+output_dir_robj <- "data/processed_data/rnaseq_ctrl_e13/r_objects/"
 
 # filename for RDS file
-filename <- "deseq2_dds_e17.rds"
+filename <- "deseq2_dds_e13-vs-e17.rds"
 
 # Make sure output directory exists, and if it doesn't, create one
 if (!dir.exists(output_dir_robj)) {
@@ -33,7 +33,7 @@ dds <- DESeqDataSetFromMatrix(countData = round(cts),
                               design = ~ condition)
 
 dds$condition <- relevel(dds$condition, 
-                         ref = "control")
+                         ref = "e13")
 
 # RUN DESEQ2 ANALYSIS: ---------------------------------------------------------
 dds <- DESeq(dds)
