@@ -1,7 +1,7 @@
 ## Introduction
 This repository contains the code and analyses associated with the manuscript titled "Epigenetic priming of neural progenitors by Notch enhances Sonic hedgehog signaling and establishes gliogenic competence" ([https://doi.org/10.1101/2025.01.20.633996](https://doi.org/10.1101/gad.352555.124)). It includes scripts for setting up the project environment, performing differential analysis, generating figures, and creating tables. The code is organized to ensure a clear workflow, where figures depend on both analysis and tables.
 
-Raw and processed data are in the process of being deposited in the Gene Expression Omnibus. The accession number can be found here once we receive it. 
+All RNA- and ATAC-seq data are available through the Gene Expression Omnibus under accession series GSE295469, GSE295475, and GSE295476.
 
 To reproduce the full analysis pipeline used in the manuscript or to reproduce any of the figures, follow the steps below.
 
